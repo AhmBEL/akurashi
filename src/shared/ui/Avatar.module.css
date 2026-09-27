@@ -1,0 +1,10 @@
+.avatar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  color: #f2f0e5;
+  /* Organic blob shape, never a perfect circle — matches Écrans Hi-Fi avatars. */
+  border-radius: 58% 42% 46% 54% / 52% 48% 52% 48%;
+}

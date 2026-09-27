@@ -1,0 +1,69 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 17, 14, 0.42);
+  display: flex;
+  align-items: flex-end;
+  z-index: 80;
+}
+
+.sheet {
+  width: 100%;
+  background: var(--fa-bg);
+  border-radius: 44px 22px 0 0;
+  padding: 24px 20px calc(env(safe-area-inset-bottom, 0px) + 118px);
+  animation: fa-up 0.22s ease;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 21px;
+  margin-bottom: 14px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--fa-line);
+  background: var(--fa-surface);
+  color: var(--fa-text);
+  border-radius: 28px 14px 26px 16px;
+  padding: 16px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mark {
+  width: 46px;
+  height: 42px;
+  border-radius: 58% 42% 44% 56% / 50% 50% 50% 50%;
+  background: var(--fa-tint);
+  color: var(--fa-accent-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  font-family: var(--font-heading);
+  font-size: 18px;
+}
+
+.itemLabel {
+  display: block;
+  font-size: 16px;
+  font-family: var(--font-heading);
+}
+
+.itemSub {
+  display: block;
+  font-size: 12.5px;
+  color: var(--fa-muted);
+}

@@ -1,0 +1,28 @@
+.row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 20px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--fa-surface);
+  border-radius: 22px 12px 20px 14px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+  color: var(--fa-text);
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}

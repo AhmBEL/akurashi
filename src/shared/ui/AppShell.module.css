@@ -1,0 +1,8 @@
+.shell {
+  min-height: 100vh;
+  background: var(--fa-bg);
+  color: var(--fa-text);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,35 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--radius-pill);
+  padding: 13px 20px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  text-align: center;
+}
+
+.primary {
+  background: var(--fa-accent);
+  color: var(--fa-on-accent);
+}
+
+.secondary {
+  background: transparent;
+  color: var(--fa-text);
+  border: 1px solid var(--fa-line);
+}
+
+.ghost {
+  background: var(--fa-tint);
+  color: var(--fa-accent-fg);
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.block {
+  width: 100%;
+}

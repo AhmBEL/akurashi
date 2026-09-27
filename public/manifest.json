@@ -1,0 +1,13 @@
+{
+  "name": "Akurashi",
+  "short_name": "Akurashi",
+  "description": "L'organisation familiale au quotidien.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#efeade",
+  "theme_color": "#3c5742",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

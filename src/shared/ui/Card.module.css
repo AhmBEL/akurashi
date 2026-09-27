@@ -1,0 +1,11 @@
+.card {
+  background: var(--fa-surface);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-4) var(--space-5);
+}
+
+.accent {
+  background: var(--fa-accent);
+  color: var(--fa-on-accent);
+  box-shadow: var(--shadow-md);
+}

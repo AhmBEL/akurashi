@@ -1,0 +1,45 @@
+.nav {
+  display: flex;
+  align-items: flex-end;
+  padding: 9px 8px calc(env(safe-area-inset-bottom, 0px) + 14px);
+  background: var(--fa-surface);
+  border-radius: 34px 26px 0 0;
+  position: relative;
+  z-index: 2;
+}
+
+.item {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  font: inherit;
+  font-size: 10.5px;
+  text-decoration: none;
+}
+
+.createWrap {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.createButton {
+  width: 62px;
+  height: 58px;
+  border-radius: 56% 44% 48% 52% / 50% 50% 50% 50%;
+  border: 4px solid var(--fa-surface);
+  background: var(--fa-accent);
+  color: var(--fa-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-16px);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+}
