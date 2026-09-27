@@ -1,0 +1,185 @@
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: max(env(safe-area-inset-top, 0px), 40px) 22px 26px;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.progress {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 22px;
+}
+
+.progressDash {
+  flex: 1;
+  height: 6px;
+  border-radius: 9px 3px 9px 3px;
+  background: rgba(32, 30, 29, 0.12);
+}
+
+.progressDashActive {
+  background: var(--fa-accent);
+}
+
+.stepLabel {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fa-muted);
+  margin-bottom: 7px;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  line-height: 1.18;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 13.5px;
+  color: var(--fa-muted);
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field label {
+  display: block;
+  font-size: 11.5px;
+  color: var(--fa-muted);
+  margin-bottom: 6px;
+}
+
+.input {
+  width: 100%;
+  background: var(--fa-surface);
+  border: 1px solid var(--fa-line);
+  border-radius: 20px 10px 20px 10px;
+  padding: 13px 15px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--fa-text);
+}
+
+.choiceCard {
+  background: var(--fa-surface);
+  border-radius: 28px 14px 26px 16px;
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: var(--fa-text);
+}
+
+.choiceTitle {
+  font-family: var(--font-heading);
+  font-size: 17px;
+}
+
+.choiceSub {
+  font-size: 12.5px;
+  color: var(--fa-muted);
+  margin-top: 3px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 20px 0;
+}
+
+.stepperButton {
+  width: 46px;
+  height: 46px;
+  border-radius: 56% 44% 48% 52% / 50% 50% 50% 50%;
+  border: 1px solid var(--fa-line);
+  background: var(--fa-surface);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.stepperValue {
+  font-family: var(--font-heading);
+  font-size: 34px;
+  min-width: 40px;
+  text-align: center;
+}
+
+.childBlock {
+  background: var(--fa-surface);
+  border-radius: 24px 12px 22px 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.childBlockTitle {
+  font-family: var(--font-heading);
+  font-size: 15px;
+}
+
+.paletteGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.swatch {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  border: 3px solid transparent;
+  cursor: pointer;
+}
+
+.swatchActive {
+  border-color: var(--fa-text);
+}
+
+.tagGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  border-radius: 999px;
+  padding: 9px 15px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid var(--fa-line);
+  background: var(--fa-surface);
+  color: var(--fa-text);
+}
+
+.tagActive {
+  background: var(--fa-accent);
+  color: var(--fa-on-accent);
+  border-color: var(--fa-accent);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.error {
+  font-size: 12.5px;
+  color: var(--fa-alert);
+}

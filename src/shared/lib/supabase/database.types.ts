@@ -18,6 +18,7 @@ export interface Database {
           security_level: "libre" | "accueil_protege" | "tout_protege";
           documents_lock_enabled: boolean;
           emergency_contacts_unlocked: boolean;
+          onboarding_pain_points: string[];
           created_at: string;
           updated_at: string;
         };

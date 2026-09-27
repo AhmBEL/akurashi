@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
 import { createClient } from "@/shared/lib/supabase/server";
 import { getCurrentMember, getFamilyMembers } from "@/domains/family/repository";
 import { getHomeCategoryOptions } from "@/domains/budget/repository";
@@ -11,15 +12,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const member = await getCurrentMember(supabase);
 
   if (!member) {
-    return (
-      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, textAlign: "center" }}>
-        <p>
-          Ton compte n&rsquo;est relié à aucun profil familial pour l&rsquo;instant. L&rsquo;onboarding
-          n&rsquo;est pas encore construit dans cette itération — demande à un administrateur de créer ton
-          profil dans la base.
-        </p>
-      </div>
-    );
+    redirect("/onboarding");
   }
 
   const themeVars = getThemeVars({
