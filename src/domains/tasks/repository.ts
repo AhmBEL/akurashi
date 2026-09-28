@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/shared/lib/supabase/database.types";
 import type { HomeTask } from "./types";
 import { toDateString } from "@/shared/lib/date";
+import { isMockMode } from "@/shared/lib/mockMode";
+import { MOCK_TASKS } from "@/shared/lib/mockFixtures";
 
 type Client = SupabaseClient<Database>;
 
@@ -19,6 +21,8 @@ interface RawTaskWithSubject {
 // The only place in the app allowed to read/write the `tasks` table directly.
 
 export async function getHomeTasks(supabase: Client, familyId: string): Promise<HomeTask[]> {
+  if (isMockMode()) return MOCK_TASKS;
+
   const today = toDateString(new Date());
 
   const { data, error } = await supabase
@@ -47,6 +51,8 @@ export async function setTaskCompletion(
   taskId: string,
   completed: boolean
 ): Promise<void> {
+  if (isMockMode()) return;
+
   await supabase
     .from("tasks")
     .update({ completed_at: completed ? new Date().toISOString() : null })

@@ -3,6 +3,8 @@ import type { Database } from "@/shared/lib/supabase/database.types";
 import type { HomeBudgetSummary, BudgetFinancialType } from "./types";
 import { computeFixedChargesStatus } from "./services/computeFixedChargesStatus";
 import { toDateString } from "@/shared/lib/date";
+import { isMockMode } from "@/shared/lib/mockMode";
+import { MOCK_BUDGET_CATEGORIES, MOCK_BUDGET_SUMMARY } from "@/shared/lib/mockFixtures";
 
 type Client = SupabaseClient<Database>;
 
@@ -20,6 +22,8 @@ function firstOfNextMonth(date = new Date()): string {
 // `budget_lines` and `budget_line_cycles` directly.
 
 export async function getHomeBudgetSummary(supabase: Client, familyId: string): Promise<HomeBudgetSummary> {
+  if (isMockMode()) return MOCK_BUDGET_SUMMARY;
+
   const monthStart = firstOfMonth();
   const nextMonthStart = firstOfNextMonth();
 
@@ -89,6 +93,8 @@ export interface AddExpenseInput {
 }
 
 export async function addExpense(supabase: Client, input: AddExpenseInput): Promise<{ error: string | null }> {
+  if (isMockMode()) return { error: null };
+
   const { error } = await supabase.from("budget_lines").insert({
     family_id: input.familyId,
     category_id: input.categoryId,
@@ -104,6 +110,8 @@ export async function addExpense(supabase: Client, input: AddExpenseInput): Prom
 }
 
 export async function getHomeCategoryOptions(supabase: Client, familyId: string) {
+  if (isMockMode()) return MOCK_BUDGET_CATEGORIES;
+
   const { data } = await supabase
     .from("budget_categories")
     .select("id, name")

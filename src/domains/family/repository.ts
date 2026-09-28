@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/shared/lib/supabase/database.types";
+import { isMockMode } from "@/shared/lib/mockMode";
+import { MOCK_CURRENT_MEMBER, MOCK_FAMILY, MOCK_MEMBERS } from "@/shared/lib/mockFixtures";
 import type { Family, FamilyMember } from "./types";
 
 type Client = SupabaseClient<Database>;
@@ -8,6 +10,8 @@ type Client = SupabaseClient<Database>;
 // `family_members` tables directly (Clean Architecture: repository per domain).
 
 export async function getCurrentMember(supabase: Client): Promise<FamilyMember | null> {
+  if (isMockMode()) return MOCK_CURRENT_MEMBER;
+
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return null;
 
@@ -32,6 +36,8 @@ export async function getCurrentMember(supabase: Client): Promise<FamilyMember |
 }
 
 export async function getFamily(supabase: Client, familyId: string): Promise<Family | null> {
+  if (isMockMode()) return MOCK_FAMILY;
+
   const { data, error } = await supabase.from("families").select("*").eq("id", familyId).single();
   if (error || !data) return null;
 
@@ -87,6 +93,8 @@ export async function createFamilyMember(supabase: Client, input: CreateFamilyMe
 }
 
 export async function getFamilyMembers(supabase: Client, familyId: string): Promise<FamilyMember[]> {
+  if (isMockMode()) return MOCK_MEMBERS;
+
   const { data, error } = await supabase
     .from("family_members")
     .select("*")
