@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { PALETTES } from "@/shared/design-tokens/palettes";
 import { getStore } from "@/shared/data/getStore";
+import { BlurInput, fieldStyle } from "@/shared/ui/BlurInput";
 import { toMinorUnits } from "@/shared/lib/money";
 import { useAppData } from "@/shared/session/AppDataContext";
 import { useHomeCategories } from "@/domains/budget/hooks";
@@ -22,22 +23,12 @@ import {
   type RewardType,
 } from "@/domains/child/types";
 import { ChoiceCard, Chip } from "@/domains/onboarding/components/steps/ui";
+import { ThresholdsEditor } from "@/domains/child/components/ThresholdsEditor";
 import { CURRENCY_OPTIONS, SECURITY_LEVEL_OPTIONS } from "../defaults";
 import { generateInviteCode } from "../inviteCode";
 import { updateFamily, updateMember, type MemberPatch } from "../repository";
 import { MODULES, MODULE_LABELS, OTHER_PARENT_MODES, type FamilySettings } from "../settings";
 import type { FamilyMember } from "../types";
-
-const fieldStyle = {
-  width: "100%",
-  background: "var(--fa-surface)",
-  border: "1px solid var(--fa-line)",
-  borderRadius: "20px 10px 20px 10px",
-  padding: "11px 14px",
-  font: "inherit",
-  fontSize: 14,
-  color: "var(--fa-text)",
-} as const;
 
 const rowStyle = { display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" } as const;
 const labelStyle = { fontSize: 11.5, color: "var(--fa-muted)", margin: "10px 0 6px" } as const;
@@ -48,20 +39,6 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
       <summary style={{ fontFamily: "var(--font-heading)", fontSize: 17, cursor: "pointer" }}>{title}</summary>
       <div style={{ marginTop: 12 }}>{children}</div>
     </details>
-  );
-}
-
-// Enregistre à la perte de focus ; `key` recharge le champ quand la valeur enregistrée change.
-function BlurInput({ value, onCommit, type = "text", label }: { value: string; onCommit: (value: string) => void; type?: string; label: string }) {
-  return (
-    <input
-      key={value}
-      style={fieldStyle}
-      type={type}
-      aria-label={label}
-      defaultValue={value}
-      onBlur={(e) => e.target.value !== value && onCommit(e.target.value)}
-    />
   );
 }
 
@@ -111,6 +88,7 @@ export function SettingsSections() {
             key={member.id}
             member={member}
             reward={rewards[member.id] ?? NO_REWARD}
+            currency={family.currency}
             onPatch={(patch) => patchMember(member.id, patch)}
             onReward={(config) => saveReward(member, config)}
           />
@@ -201,11 +179,13 @@ export function SettingsSections() {
 function MemberEditor({
   member,
   reward,
+  currency,
   onPatch,
   onReward,
 }: {
   member: FamilyMember;
   reward: RewardConfig;
+  currency: string;
   onPatch: (patch: MemberPatch) => void;
   onReward: (config: RewardConfig) => void;
 }) {
@@ -290,6 +270,7 @@ function MemberEditor({
                   </Chip>
                 ))}
               </div>
+              {member.role === "enfant" && <ThresholdsEditor childId={member.id} currency={currency} />}
               {reward.type === "badge" && (
                 <div style={{ ...rowStyle, marginTop: 8 }}>
                   {VISUAL_THEMES.map((theme) => (

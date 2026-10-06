@@ -34,3 +34,17 @@ export interface RewardConfig {
 }
 
 export const NO_REWARD: RewardConfig = { type: "aucun", compensationType: "aucune", visualTheme: null };
+
+// Palier hebdomadaire : atteint dès que `thresholdValue` tâches sont validées dans la semaine.
+export interface RewardThreshold {
+  id: string;
+  label: string;
+  thresholdValue: number;
+  amount: number | null; // compensation financière du palier, en centimes (parent seulement)
+  sortOrder: number;
+}
+
+export interface ThresholdTemplate {
+  label: string;
+  thresholdValue: number;
+}

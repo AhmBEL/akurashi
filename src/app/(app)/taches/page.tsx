@@ -8,7 +8,7 @@ import { Chip } from "@/domains/onboarding/components/steps/ui";
 import { TaskRow } from "@/domains/tasks/components/TaskRow";
 import { TaskSheet } from "@/domains/tasks/components/TaskSheet";
 import { useTasksOfMember } from "@/domains/tasks/hooks";
-import { setTaskCompletion } from "@/domains/tasks/repository";
+import { toggleTaskCompletion } from "@/domains/motivation/repository";
 import { bucketOf } from "@/domains/tasks/services/taskRules";
 import type { TaskBucket, TaskView } from "@/domains/tasks/types";
 import styles from "@/domains/tasks/components/TasksBlock.module.css";
@@ -27,7 +27,13 @@ export default function TachesPage() {
   const tasks = useTasksOfMember(family.id, selectedId, member.id) ?? [];
 
   const toggle = (task: TaskView) => {
-    void setTaskCompletion(getStore(), task.id, !task.done);
+    void toggleTaskCompletion(getStore(), {
+      familyId: family.id,
+      taskId: task.id,
+      subjectId: selectedId,
+      actorId: member.id,
+      completed: !task.done,
+    });
   };
 
   return (

@@ -59,6 +59,11 @@ export function AppChrome({ children }: { children: ReactNode }) {
       : []),
   ];
 
+  // Enfant accompagné : une page unique, sans barre de navigation ni menu de création.
+  if (member.role === "enfant" && member.accessStatus === "managed") {
+    return <div className={styles.content}>{children}</div>;
+  }
+
   return (
     <>
       <div className={styles.content}>

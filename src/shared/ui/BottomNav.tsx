@@ -19,7 +19,7 @@ interface NavItem {
 
 export function BottomNav({ onOpenQuickCreate }: BottomNavProps) {
   const pathname = usePathname();
-  const { family, members } = useAppData();
+  const { family, members, member } = useAppData();
 
   // La navigation ne montre que les modules actifs (onboarding / Réglages) ;
   // l'onglet Enfants n'existe que s'il y a des enfants.
@@ -27,7 +27,7 @@ export function BottomNav({ onOpenQuickCreate }: BottomNavProps) {
     { href: "/", label: "Accueil", icon: Home },
     ...(isModuleActive(family.settings, "agenda") ? [{ href: "/agenda", label: "Agenda", icon: Calendar }] : []),
     ...(isModuleActive(family.settings, "documents") ? [{ href: "/documents", label: "Documents", icon: Lock }] : []),
-    ...(members.some((member) => member.role === "enfant") ? [{ href: "/enfants", label: "Enfants", icon: Users }] : []),
+    ...(member.role === "parent" && members.some((candidate) => candidate.role === "enfant") ? [{ href: "/enfants", label: "Enfants", icon: Users }] : []),
   ];
   const middle = Math.ceil(items.length / 2);
 

@@ -167,6 +167,43 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["reward_systems"]["Row"]>;
         Relationships: [];
       };
+      reward_thresholds: {
+        Row: {
+          id: string;
+          reward_system_id: string;
+          label: string;
+          threshold_value: number;
+          amount: number | null;
+          sort_order: number;
+        };
+        Insert: Partial<Database["public"]["Tables"]["reward_thresholds"]["Row"]> & {
+          reward_system_id: string;
+          label: string;
+          threshold_value: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["reward_thresholds"]["Row"]>;
+        Relationships: [];
+      };
+      task_completions: {
+        Row: {
+          id: string;
+          family_id: string;
+          task_id: string;
+          subject_id: string;
+          actor_id: string | null;
+          completed_on: string;
+          created_at: string;
+          undone_at: string | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["task_completions"]["Row"]> & {
+          family_id: string;
+          task_id: string;
+          subject_id: string;
+          completed_on: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["task_completions"]["Row"]>;
+        Relationships: [];
+      };
       // Tables de liaison : clé composite en base, pas de colonne `id`.
       task_participants: {
         Row: {

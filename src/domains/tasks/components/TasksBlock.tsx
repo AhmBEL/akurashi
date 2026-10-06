@@ -4,7 +4,7 @@ import Link from "next/link";
 import { getStore } from "@/shared/data/getStore";
 import { toDateString } from "@/shared/lib/date";
 import { useTasksOfMember } from "../hooks";
-import { setTaskCompletion } from "../repository";
+import { toggleTaskCompletion } from "@/domains/motivation/repository";
 import { isDueToday } from "../services/taskRules";
 import type { TaskView } from "../types";
 import { TaskRow } from "./TaskRow";
@@ -30,7 +30,13 @@ export function TasksBlock({ familyId, memberId }: TasksBlockProps) {
     .slice(0, HOME_LIMIT);
 
   const toggle = (task: TaskView) => {
-    void setTaskCompletion(getStore(), task.id, !task.done);
+    void toggleTaskCompletion(getStore(), {
+      familyId,
+      taskId: task.id,
+      subjectId: memberId,
+      actorId: memberId,
+      completed: !task.done,
+    });
   };
 
   return (
