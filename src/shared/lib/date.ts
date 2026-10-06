@@ -10,19 +10,8 @@ export function toDateString(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-// family_members.age is stored as a free integer (03-base-de-donnees.md), not
-// a birthdate — onboarding collects a birthdate for a nicer picker UX, then
-// this converts it once at submission time.
-export function computeAgeFromBirthDate(birthDateStr: string): number | null {
-  const birthDate = new Date(birthDateStr);
-  if (Number.isNaN(birthDate.getTime())) return null;
-
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const hasNotHadBirthdayYetThisYear =
-    today.getMonth() < birthDate.getMonth() ||
-    (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate());
-  if (hasNotHadBirthdayYetThisYear) age -= 1;
-
-  return age >= 0 ? age : null;
+// Lundi de la semaine de `date` (heure locale), à minuit.
+export function startOfWeek(date: Date): Date {
+  const daysSinceMonday = (date.getDay() + 6) % 7;
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - daysSinceMonday);
 }

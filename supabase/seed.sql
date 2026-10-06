@@ -21,7 +21,7 @@ values
   ('00000000-0000-0000-0000-000000000001', 'Relevé bancaire', current_date, '00000000-0000-0000-0000-000000000012', null, 'a_decider'),
   ('00000000-0000-0000-0000-000000000001', 'Devoirs de lecture', current_date - 1, '00000000-0000-0000-0000-000000000013', null, 'assignee');
 
-insert into budget_categories (family_id, name, monthly_target_amount, show_on_home) values
+insert into budget_categories (family_id, name, target_amount, show_on_home) values
   ('00000000-0000-0000-0000-000000000001', 'Courses', 12000, true),
   ('00000000-0000-0000-0000-000000000001', 'Loisirs', 15000, true),
   ('00000000-0000-0000-0000-000000000001', 'Logement', null, false),

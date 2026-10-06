@@ -2,6 +2,7 @@
 
 import { useAppData } from "@/shared/session/AppDataContext";
 import { paletteSoftColor } from "@/shared/design-tokens/palettes";
+import { isModuleActive } from "@/domains/family/settings";
 import { useHomeBudgetSummary } from "@/domains/budget/hooks";
 import { TasksBlock } from "@/domains/tasks/components/TasksBlock";
 import { BudgetCard } from "@/domains/budget/components/BudgetCard";
@@ -19,7 +20,8 @@ export default function HomePage() {
 
       <TasksBlock familyId={family.id} />
 
-      {budgetSummary && (
+      {/* Le budget n'existe que dans l'espace parent : l'enfant ne voit jamais l'argent. */}
+      {member.role === "parent" && family.settings.budgetEnabled && budgetSummary && (
         <BudgetCard
           summary={budgetSummary}
           currency={family.currency}
@@ -27,7 +29,7 @@ export default function HomePage() {
         />
       )}
 
-      <SecureDocumentsCard />
+      {isModuleActive(family.settings, "documents") && <SecureDocumentsCard />}
 
       <QuickAccessRow />
     </div>

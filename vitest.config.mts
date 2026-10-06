@@ -7,6 +7,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    env: { NEXT_PUBLIC_DEMO_MODE: "true" },
     include: ["src/**/*.test.ts"],
   },
 });

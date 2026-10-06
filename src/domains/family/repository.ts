@@ -1,6 +1,7 @@
 import type { Database } from "@/shared/lib/supabase/database.types";
 import type { DataStore, NewRow } from "@/shared/data/types";
 import { resolveCurrentMemberId } from "@/shared/session/session";
+import { parseFamilySettings, type FamilySettings } from "./settings";
 import type { Family, FamilyMember, FamilyState } from "./types";
 
 // Le seul endroit autorisé à lire/écrire `families` et `family_members`
@@ -14,6 +15,9 @@ const toMember = (row: FamilyMemberRow): FamilyMember => ({
   familyId: row.family_id,
   name: row.name,
   role: row.role,
+  age: row.age,
+  accessStatus: row.access_status,
+  rdvPriveAutorise: row.rdv_prive_autorise,
   signatureColor: row.signature_color,
   darkModeEnabled: row.dark_mode_enabled,
   linkedAccountId: row.linked_account_id,
@@ -24,6 +28,7 @@ const toFamily = (row: FamilyRow): Family => ({
   name: row.name,
   currency: row.currency,
   securityLevel: row.security_level,
+  settings: parseFamilySettings(row.settings),
 });
 
 async function listActiveMembers(store: DataStore, familyId?: string): Promise<FamilyMemberRow[]> {
@@ -47,19 +52,37 @@ export async function loadFamilyState(store: DataStore): Promise<FamilyState | n
 export interface CreateFamilyInput {
   name: string;
   currency: string;
-  painPoints: string[];
+  securityLevel: Family["securityLevel"];
+  settings: FamilySettings;
 }
 
 export async function createFamily(store: DataStore, input: CreateFamilyInput): Promise<Family> {
   const row = await store.create<FamilyRow>("families", {
     name: input.name,
     currency: input.currency,
-    security_level: "libre",
+    security_level: input.securityLevel,
     documents_lock_enabled: true,
     emergency_contacts_unlocked: true,
-    onboarding_pain_points: input.painPoints,
+    onboarding_pain_points: [],
+    settings: input.settings,
   } satisfies NewRow<FamilyRow>);
   return toFamily(row);
+}
+
+export interface FamilyPatch {
+  name?: string;
+  currency?: string;
+  securityLevel?: Family["securityLevel"];
+  settings?: FamilySettings;
+}
+
+export async function updateFamily(store: DataStore, familyId: string, patch: FamilyPatch): Promise<void> {
+  await store.update<FamilyRow>("families", familyId, {
+    ...(patch.name !== undefined && { name: patch.name }),
+    ...(patch.currency !== undefined && { currency: patch.currency }),
+    ...(patch.securityLevel !== undefined && { security_level: patch.securityLevel }),
+    ...(patch.settings !== undefined && { settings: patch.settings }),
+  });
 }
 
 export interface CreateFamilyMemberInput {
@@ -68,9 +91,12 @@ export interface CreateFamilyMemberInput {
   role: "parent" | "enfant";
   age: number | null;
   signatureColor: string;
-  accessStatus: "managed" | "invited_pending" | "linked" | null;
+  accessStatus: AccessStatusInput;
+  rdvPriveAutorise?: boolean;
   linkedAccountId: string | null;
 }
+
+type AccessStatusInput = FamilyMember["accessStatus"];
 
 export async function createFamilyMember(store: DataStore, input: CreateFamilyMemberInput): Promise<FamilyMember> {
   const row = await store.create<FamilyMemberRow>("family_members", {
@@ -82,8 +108,26 @@ export async function createFamilyMember(store: DataStore, input: CreateFamilyMe
     age: input.age,
     signature_color: input.signatureColor,
     dark_mode_enabled: false,
-    rdv_prive_autorise: false,
+    rdv_prive_autorise: input.rdvPriveAutorise ?? false,
     deleted_at: null,
   } satisfies NewRow<FamilyMemberRow>);
   return toMember(row);
+}
+
+export interface MemberPatch {
+  name?: string;
+  age?: number | null;
+  signatureColor?: string;
+  accessStatus?: AccessStatusInput;
+  rdvPriveAutorise?: boolean;
+}
+
+export async function updateMember(store: DataStore, memberId: string, patch: MemberPatch): Promise<void> {
+  await store.update<FamilyMemberRow>("family_members", memberId, {
+    ...(patch.name !== undefined && { name: patch.name }),
+    ...(patch.age !== undefined && { age: patch.age }),
+    ...(patch.signatureColor !== undefined && { signature_color: patch.signatureColor }),
+    ...(patch.accessStatus !== undefined && { access_status: patch.accessStatus }),
+    ...(patch.rdvPriveAutorise !== undefined && { rdv_prive_autorise: patch.rdvPriveAutorise }),
+  });
 }

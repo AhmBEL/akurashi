@@ -19,6 +19,7 @@ export interface Database {
           documents_lock_enabled: boolean;
           emergency_contacts_unlocked: boolean;
           onboarding_pain_points: string[];
+          settings: Record<string, unknown>;
           created_at: string;
           updated_at: string;
         };
@@ -81,7 +82,8 @@ export interface Database {
           id: string;
           family_id: string;
           name: string;
-          monthly_target_amount: number | null;
+          target_amount: number | null;
+          target_period: "week" | "month";
           show_on_home: boolean;
           created_at: string;
         };
@@ -133,6 +135,36 @@ export interface Database {
           period_month: string;
         };
         Update: Partial<Database["public"]["Tables"]["budget_line_cycles"]["Row"]>;
+        Relationships: [];
+      };
+      task_categories: {
+        Row: {
+          id: string;
+          family_id: string;
+          name: string;
+          necessite_contact_lieu: boolean;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["task_categories"]["Row"]> & {
+          family_id: string;
+          name: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["task_categories"]["Row"]>;
+        Relationships: [];
+      };
+      reward_systems: {
+        Row: {
+          id: string;
+          child_id: string;
+          type: "badge" | "etoile" | "note" | "compteur" | "aucun";
+          compensation_type: "financiere_indexee" | "financiere_libre" | "credit_comportement" | "aucune";
+          unlock_mode: "progressif" | "final";
+          visual_theme: "ferme" | "foret" | "ocean" | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["reward_systems"]["Row"]> & { child_id: string };
+        Update: Partial<Database["public"]["Tables"]["reward_systems"]["Row"]>;
         Relationships: [];
       };
     };

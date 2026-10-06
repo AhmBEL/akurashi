@@ -183,3 +183,47 @@
   font-size: 12.5px;
   color: var(--fa-alert);
 }
+
+.choiceCardActive {
+  outline: 2px solid var(--fa-accent);
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--fa-muted);
+  line-height: 1.45;
+}
+
+.chargeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chargeRow .input {
+  width: 120px;
+  flex: none;
+}
+
+.chargeRow .tag {
+  flex: 1;
+  text-align: left;
+}
+
+.sectionLabel {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fa-muted);
+  margin-top: 6px;
+}
+
+.skip {
+  background: none;
+  border: none;
+  color: var(--fa-muted);
+  font: inherit;
+  font-size: 13px;
+  padding: 13px 8px;
+  cursor: pointer;
+}

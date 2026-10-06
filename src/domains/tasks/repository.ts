@@ -34,6 +34,21 @@ export async function getHomeTasks(store: DataStore, familyId: string): Promise<
     });
 }
 
+type TaskCategoryRow = Database["public"]["Tables"]["task_categories"]["Row"];
+
+export async function createTaskCategory(
+  store: DataStore,
+  familyId: string,
+  name: string,
+  needsContactPlace: boolean
+): Promise<void> {
+  await store.create<TaskCategoryRow>("task_categories", {
+    family_id: familyId,
+    name,
+    necessite_contact_lieu: needsContactPlace,
+  });
+}
+
 export async function setTaskCompletion(store: DataStore, taskId: string, completed: boolean): Promise<void> {
   await store.update<TaskRow>("tasks", taskId, { completed_at: completed ? new Date().toISOString() : null });
 }

@@ -7,6 +7,8 @@ import type { ExportBlob } from "@/shared/data/types";
 import { useAppData } from "@/shared/session/AppDataContext";
 import { setStoredMemberId } from "@/shared/session/session";
 import { toDateString } from "@/shared/lib/date";
+import { DEFAULT_PALETTE, PALETTES } from "@/shared/design-tokens/palettes";
+import { createFamilyMember } from "@/domains/family/repository";
 import { PillButton } from "./PillButton";
 
 const sectionTitle = {
@@ -30,6 +32,22 @@ export function DevTools() {
     await getStore().clearAll();
     setStoredMemberId(null);
     router.replace("/onboarding");
+  };
+
+  const addTestParent = async () => {
+    const parents = members.filter((candidate) => candidate.role === "parent");
+    const used = new Set(parents.map((parent) => parent.signatureColor));
+    const color = Object.keys(PALETTES).find((key) => !used.has(key)) ?? DEFAULT_PALETTE;
+    await createFamilyMember(getStore(), {
+      familyId: member.familyId,
+      name: `Parent ${parents.length + 1}`,
+      role: "parent",
+      age: null,
+      signatureColor: color,
+      accessStatus: null,
+      linkedAccountId: null,
+    });
+    setMessage("Parent de test ajouté : choisis-le dans « Profil ».");
   };
 
   const exportJson = async () => {
@@ -71,6 +89,7 @@ export function DevTools() {
 
       <div style={sectionTitle}>Données</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+        <PillButton onClick={addTestParent}>Ajouter un parent de test</PillButton>
         <PillButton onClick={exportJson}>Exporter en JSON</PillButton>
         <PillButton onClick={() => fileInput.current?.click()}>Importer un JSON</PillButton>
         <input
