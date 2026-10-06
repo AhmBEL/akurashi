@@ -1,45 +1,53 @@
 "use client";
 
-import { Avatar } from "@/shared/ui/Avatar";
+import Link from "next/link";
 import { getStore } from "@/shared/data/getStore";
-import { paletteSoftColor } from "@/shared/design-tokens/palettes";
-import { useHomeTasks } from "../hooks";
+import { toDateString } from "@/shared/lib/date";
+import { useTasksOfMember } from "../hooks";
 import { setTaskCompletion } from "../repository";
-import type { HomeTask } from "../types";
+import { isDueToday } from "../services/taskRules";
+import type { TaskView } from "../types";
+import { TaskRow } from "./TaskRow";
 import styles from "./TasksBlock.module.css";
+
+const HOME_LIMIT = 8;
 
 interface TasksBlockProps {
   familyId: string;
+  memberId: string;
 }
 
-export function TasksBlock({ familyId }: TasksBlockProps) {
-  const tasks = useHomeTasks(familyId);
+// « Mes tâches du jour » : à faire aujourd'hui ou en retard, plus celles
+// cochées aujourd'hui (elles restent barrées jusqu'à demain).
+export function TasksBlock({ familyId, memberId }: TasksBlockProps) {
+  const tasks = useTasksOfMember(familyId, memberId, memberId);
+  const today = new Date();
+  const todayKey = toDateString(today);
 
-  const toggle = (task: HomeTask) => {
-    void setTaskCompletion(getStore(), task.id, !task.completedAt);
+  const visible = (tasks ?? [])
+    .filter((task) => isDueToday(task, today))
+    .filter((task) => !task.done || (task.completedAt !== null && toDateString(new Date(task.completedAt)) === todayKey))
+    .slice(0, HOME_LIMIT);
+
+  const toggle = (task: TaskView) => {
+    void setTaskCompletion(getStore(), task.id, !task.done);
   };
 
   return (
     <div>
-      <div className={styles.title}>Tâches</div>
-      {!tasks || tasks.length === 0 ? (
+      <div className={styles.title}>Mes tâches</div>
+      {visible.length === 0 ? (
         <div className={styles.empty}>Rien à faire aujourd&rsquo;hui.</div>
       ) : (
         <div className={styles.list}>
-          {tasks.map((task) => {
-            const done = Boolean(task.completedAt);
-            return (
-              <button key={task.id} className={styles.row} onClick={() => toggle(task)}>
-                <span className={[styles.check, done ? styles.checked : ""].filter(Boolean).join(" ")} />
-                <span className={[styles.label, done ? styles.done : ""].filter(Boolean).join(" ")}>{task.title}</span>
-                {task.subject ? (
-                  <Avatar name={task.subject.name} color={paletteSoftColor(task.subject.signatureColor)} size={28} />
-                ) : null}
-              </button>
-            );
-          })}
+          {visible.map((task) => (
+            <TaskRow key={task.id} task={task} onToggle={toggle} />
+          ))}
         </div>
       )}
+      <Link href="/taches" className={styles.more}>
+        Voir toutes les tâches
+      </Link>
     </div>
   );
 }

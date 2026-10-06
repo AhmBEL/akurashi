@@ -21,6 +21,14 @@ export function createLocalStore(dbName = "akurashi"): DataStore {
   const bus = createChangeBus(`${dbName}-changes`);
   let dbPromise: Promise<IDBPDatabase> | null = null;
 
+  // Horodatages de création strictement croissants : deux lignes créées dans la
+  // même milliseconde gardent leur ordre d'insertion au tri par `created_at`.
+  let lastCreatedAt = 0;
+  const nextCreatedAt = () => {
+    lastCreatedAt = Math.max(Date.now(), lastCreatedAt + 1);
+    return new Date(lastCreatedAt).toISOString();
+  };
+
   const getDb = () => {
     dbPromise ??= openDB(dbName, 1, {
       upgrade(db) {
@@ -50,7 +58,7 @@ export function createLocalStore(dbName = "akurashi"): DataStore {
     },
 
     async create<T extends BaseRow>(table: string, data: NewRow<T>) {
-      const now = new Date().toISOString();
+      const now = nextCreatedAt();
       const row = { ...data, id: data.id ?? crypto.randomUUID(), created_at: now, updated_at: now } as unknown as T;
       const db = await getDb();
       await db.put(STORE, { key: `${table}:${row.id}`, table, data: row as unknown as Record<string, unknown> } satisfies StoredRecord);

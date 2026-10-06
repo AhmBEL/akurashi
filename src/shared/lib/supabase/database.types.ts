@@ -167,6 +167,47 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["reward_systems"]["Row"]>;
         Relationships: [];
       };
+      // Tables de liaison : clé composite en base, pas de colonne `id`.
+      task_participants: {
+        Row: {
+          task_id: string;
+          member_id: string;
+          role_in_task: "auto" | "assigne" | "partage";
+        };
+        Insert: Database["public"]["Tables"]["task_participants"]["Row"];
+        Update: Partial<Database["public"]["Tables"]["task_participants"]["Row"]>;
+        Relationships: [];
+      };
+      task_categories_link: {
+        Row: {
+          task_id: string;
+          category_id: string;
+        };
+        Insert: Database["public"]["Tables"]["task_categories_link"]["Row"];
+        Update: Partial<Database["public"]["Tables"]["task_categories_link"]["Row"]>;
+        Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          family_id: string;
+          recipient_id: string;
+          category: string;
+          title: string;
+          body: string | null;
+          is_urgent: boolean;
+          sent_at: string;
+          read_at: string | null;
+        };
+        Insert: Partial<Database["public"]["Tables"]["notifications"]["Row"]> & {
+          family_id: string;
+          recipient_id: string;
+          category: string;
+          title: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["notifications"]["Row"]>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

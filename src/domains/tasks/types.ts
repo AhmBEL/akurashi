@@ -1,11 +1,28 @@
-export interface HomeTask {
+export type AssignmentStatus = "auto_assignee" | "assignee" | "partagee" | "a_discuter" | "a_decider";
+
+export interface MemberRef {
+  id: string;
+  name: string;
+  signatureColor: string;
+}
+
+// Vue d'une tâche prête à afficher (créateur, participants, catégories résolus).
+export interface TaskView {
   id: string;
   title: string;
+  description: string | null;
   dueDate: string | null;
+  dueTime: string | null;
+  locationText: string | null;
+  assignmentStatus: AssignmentStatus;
+  isUrgent: boolean;
+  isPrivate: boolean;
+  recurrenceDays: number[]; // 0 = lundi … 6 = dimanche ; vide = ponctuelle
   completedAt: string | null;
-  subject: {
-    id: string;
-    name: string;
-    signatureColor: string;
-  } | null;
+  done: boolean;
+  creator: MemberRef | null;
+  participants: MemberRef[];
+  categoryNames: string[];
 }
+
+export type TaskBucket = "perso" | "famille" | "ponctuelles";

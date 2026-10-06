@@ -36,6 +36,14 @@ describe("LocalStore", () => {
     expect(await store.list<TestRow>("tasks", { done: null })).toHaveLength(2);
   });
 
+  it("conserve l'ordre d'insertion même pour des créations quasi simultanées", async () => {
+    const store = freshStore();
+    for (let i = 0; i < 25; i++) await store.create<TestRow>("tasks", newRow("f1", `ligne ${i}`));
+
+    const titles = (await store.list<TestRow>("tasks")).map((row) => row.title);
+    expect(titles).toEqual(Array.from({ length: 25 }, (_, i) => `ligne ${i}`));
+  });
+
   it("met à jour et supprime", async () => {
     const store = freshStore();
     const row = await store.create<TestRow>("tasks", newRow("f1", "A"));

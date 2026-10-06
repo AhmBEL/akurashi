@@ -55,3 +55,51 @@
   color: var(--fa-muted);
   margin-bottom: 22px;
 }
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--fa-muted);
+}
+
+.badge {
+  border-radius: 999px;
+  padding: 2px 9px;
+  background: var(--fa-tint);
+  color: var(--fa-accent-fg);
+}
+
+.badgeUrgent {
+  background: var(--fa-alert);
+  color: #fff;
+}
+
+.avatars {
+  display: flex;
+  gap: 4px;
+  flex: none;
+}
+
+.more {
+  font-size: 13px;
+  color: var(--fa-accent-fg);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 16px;
+}
+
+.blockTitle {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fa-muted);
+  margin: 18px 0 9px;
+}

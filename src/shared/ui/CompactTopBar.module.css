@@ -14,3 +14,26 @@
 .avatarLink {
   text-decoration: none;
 }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.bell {
+  position: relative;
+  color: var(--fa-text);
+  display: flex;
+}
+
+.dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--fa-alert);
+  border: 2px solid var(--fa-bg);
+}

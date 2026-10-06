@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAppData } from "@/shared/session/AppDataContext";
 import { useCategoryOptions } from "@/domains/budget/hooks";
 import { AddExpenseSheet } from "@/domains/budget/components/AddExpenseSheet";
+import { TaskSheet } from "@/domains/tasks/components/TaskSheet";
 import { isModuleActive } from "@/domains/family/settings";
 import { BottomNav } from "./BottomNav";
 import { QuickCreateSheet } from "./QuickCreateSheet";
@@ -16,6 +17,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
   const budgetCategories = useCategoryOptions(family.id) ?? [];
   const [quickOpen, setQuickOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
   const router = useRouter();
 
   const goTo = (path: string) => () => {
@@ -39,9 +41,16 @@ export function AppChrome({ children }: { children: ReactNode }) {
           },
         ]
       : []),
-    ...(isModuleActive(settings, "agenda")
-      ? [{ mark: "RD", label: "Rendez-vous", sub: "Un créneau dans l'agenda famille", onSelect: goTo("/agenda") }]
-      : []),
+    // Un rendez-vous est une tâche avec une date : une seule fiche, toujours disponible.
+    {
+      mark: "TA",
+      label: "Tâche / rendez-vous",
+      sub: "Pour toi, l'autre parent ou un enfant",
+      onSelect: () => {
+        setQuickOpen(false);
+        setTaskOpen(true);
+      },
+    },
     ...(isModuleActive(settings, "sujets")
       ? [{ mark: "SU", label: "Sujet", sub: "Un projet à suivre à plusieurs", onSelect: goTo("/sujets") }]
       : []),
@@ -60,6 +69,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
         <BottomNav onOpenQuickCreate={() => setQuickOpen(true)} />
       </div>
       <QuickCreateSheet open={quickOpen} onClose={() => setQuickOpen(false)} items={quickItems} />
+      <TaskSheet open={taskOpen} onClose={() => setTaskOpen(false)} />
       <AddExpenseSheet
         open={addExpenseOpen}
         onClose={() => setAddExpenseOpen(false)}
