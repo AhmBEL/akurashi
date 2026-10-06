@@ -2,22 +2,25 @@
 
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { useAppData } from "@/shared/session/AppDataContext";
+import { useCategoryOptions } from "@/domains/budget/hooks";
+import { AddExpenseSheet } from "@/domains/budget/components/AddExpenseSheet";
 import { BottomNav } from "./BottomNav";
 import { QuickCreateSheet } from "./QuickCreateSheet";
-import { AddExpenseSheet } from "@/domains/budget/components/AddExpenseSheet";
+import { InstallBanner } from "./InstallBanner";
 import styles from "./AppChrome.module.css";
 
-interface AppChromeProps {
-  children: ReactNode;
-  familyId: string;
-  budgetCategories: { id: string; name: string }[];
-  members: { id: string; name: string }[];
-}
-
-export function AppChrome({ children, familyId, budgetCategories, members }: AppChromeProps) {
+export function AppChrome({ children }: { children: ReactNode }) {
+  const { family, members } = useAppData();
+  const budgetCategories = useCategoryOptions(family.id) ?? [];
   const [quickOpen, setQuickOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const router = useRouter();
+
+  const goTo = (path: string) => () => {
+    setQuickOpen(false);
+    router.push(path);
+  };
 
   const quickItems = [
     {
@@ -29,38 +32,17 @@ export function AppChrome({ children, familyId, budgetCategories, members }: App
         setAddExpenseOpen(true);
       },
     },
-    {
-      mark: "RD",
-      label: "Rendez-vous",
-      sub: "Un créneau dans l'agenda famille",
-      onSelect: () => {
-        setQuickOpen(false);
-        router.push("/agenda");
-      },
-    },
-    {
-      mark: "SU",
-      label: "Sujet",
-      sub: "Un projet à suivre à plusieurs",
-      onSelect: () => {
-        setQuickOpen(false);
-        router.push("/sujets");
-      },
-    },
-    {
-      mark: "DO",
-      label: "Document",
-      sub: "Un fichier dans le coffre sécurisé",
-      onSelect: () => {
-        setQuickOpen(false);
-        router.push("/documents");
-      },
-    },
+    { mark: "RD", label: "Rendez-vous", sub: "Un créneau dans l'agenda famille", onSelect: goTo("/agenda") },
+    { mark: "SU", label: "Sujet", sub: "Un projet à suivre à plusieurs", onSelect: goTo("/sujets") },
+    { mark: "DO", label: "Document", sub: "Un fichier dans le coffre sécurisé", onSelect: goTo("/documents") },
   ];
 
   return (
     <>
-      <div className={styles.content}>{children}</div>
+      <div className={styles.content}>
+        <InstallBanner />
+        {children}
+      </div>
       <div className={styles.navWrap}>
         <BottomNav onOpenQuickCreate={() => setQuickOpen(true)} />
       </div>
@@ -68,9 +50,9 @@ export function AppChrome({ children, familyId, budgetCategories, members }: App
       <AddExpenseSheet
         open={addExpenseOpen}
         onClose={() => setAddExpenseOpen(false)}
-        familyId={familyId}
+        familyId={family.id}
         categories={budgetCategories}
-        members={members}
+        members={members.map((member) => ({ id: member.id, name: member.name }))}
       />
     </>
   );

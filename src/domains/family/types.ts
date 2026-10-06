@@ -14,3 +14,9 @@ export interface FamilyMember {
   darkModeEnabled: boolean;
   linkedAccountId: string | null;
 }
+
+export interface FamilyState {
+  member: FamilyMember;
+  family: Family;
+  members: FamilyMember[];
+}

@@ -53,7 +53,9 @@ export function BudgetCard({ summary, currency, defaultAmountsHidden }: BudgetCa
               label={
                 hidden
                   ? gauge.label
-                  : `${gauge.label} · ${formatMoney(gauge.spentAmount, currency)} / ${formatMoney(gauge.targetAmount, currency)}`
+                  : gauge.targetAmount > 0
+                    ? `${gauge.label} · ${formatMoney(gauge.spentAmount, currency)} / ${formatMoney(gauge.targetAmount, currency)}`
+                    : `${gauge.label} · ${formatMoney(gauge.spentAmount, currency)}`
               }
               pct={gauge.pct}
               fillColor="rgba(255,255,255,.92)"

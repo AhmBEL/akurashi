@@ -1,13 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "./database.types";
-import { isMockMode } from "../mockMode";
+import { isDemoMode } from "../../config";
 
 const PUBLIC_PATHS = ["/login", "/auth/callback"];
 
 export async function updateSession(request: NextRequest) {
-  // Mock mode: no login screen, no session check — see mockMode.ts.
-  if (isMockMode()) {
+  // Mode démo : ni écran de connexion ni contrôle de session — voir config.ts.
+  if (isDemoMode()) {
     return NextResponse.next({ request });
   }
 

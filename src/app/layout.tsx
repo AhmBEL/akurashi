@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   title: "Akurashi",
   description: "L'organisation familiale au quotidien.",
   manifest: "/manifest.json",
+  icons: { apple: "/icons/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "Akurashi", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

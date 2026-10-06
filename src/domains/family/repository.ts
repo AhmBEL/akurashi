@@ -1,67 +1,65 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/shared/lib/supabase/database.types";
-import { isMockMode } from "@/shared/lib/mockMode";
-import { MOCK_CURRENT_MEMBER, MOCK_FAMILY, MOCK_MEMBERS } from "@/shared/lib/mockFixtures";
-import type { Family, FamilyMember } from "./types";
+import type { DataStore, NewRow } from "@/shared/data/types";
+import { resolveCurrentMemberId } from "@/shared/session/session";
+import type { Family, FamilyMember, FamilyState } from "./types";
 
-type Client = SupabaseClient<Database>;
+// Le seul endroit autorisé à lire/écrire `families` et `family_members`
+// (un repository par domaine), toujours via le DataStore.
 
-// The only place in the app allowed to read/write the `families` and
-// `family_members` tables directly (Clean Architecture: repository per domain).
+export type FamilyRow = Database["public"]["Tables"]["families"]["Row"];
+export type FamilyMemberRow = Database["public"]["Tables"]["family_members"]["Row"];
 
-export async function getCurrentMember(supabase: Client): Promise<FamilyMember | null> {
-  if (isMockMode()) return MOCK_CURRENT_MEMBER;
+const toMember = (row: FamilyMemberRow): FamilyMember => ({
+  id: row.id,
+  familyId: row.family_id,
+  name: row.name,
+  role: row.role,
+  signatureColor: row.signature_color,
+  darkModeEnabled: row.dark_mode_enabled,
+  linkedAccountId: row.linked_account_id,
+});
 
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) return null;
+const toFamily = (row: FamilyRow): Family => ({
+  id: row.id,
+  name: row.name,
+  currency: row.currency,
+  securityLevel: row.security_level,
+});
 
-  const { data, error } = await supabase
-    .from("family_members")
-    .select("*")
-    .eq("linked_account_id", auth.user.id)
-    .is("deleted_at", null)
-    .maybeSingle();
-
-  if (error || !data) return null;
-
-  return {
-    id: data.id,
-    familyId: data.family_id,
-    name: data.name,
-    role: data.role,
-    signatureColor: data.signature_color,
-    darkModeEnabled: data.dark_mode_enabled,
-    linkedAccountId: data.linked_account_id,
-  };
+async function listActiveMembers(store: DataStore, familyId?: string): Promise<FamilyMemberRow[]> {
+  const rows = await store.list<FamilyMemberRow>("family_members", familyId ? { family_id: familyId } : undefined);
+  return rows.filter((row) => !row.deleted_at);
 }
 
-export async function getFamily(supabase: Client, familyId: string): Promise<Family | null> {
-  if (isMockMode()) return MOCK_FAMILY;
+export async function loadFamilyState(store: DataStore): Promise<FamilyState | null> {
+  const candidates = await listActiveMembers(store);
+  const currentId = await resolveCurrentMemberId(candidates);
+  const current = candidates.find((row) => row.id === currentId);
+  if (!current) return null;
 
-  const { data, error } = await supabase.from("families").select("*").eq("id", familyId).single();
-  if (error || !data) return null;
+  const familyRow = await store.get<FamilyRow>("families", current.family_id);
+  if (!familyRow) return null;
 
-  return {
-    id: data.id,
-    name: data.name,
-    currency: data.currency,
-    securityLevel: data.security_level,
-  };
+  const members = candidates.filter((row) => row.family_id === current.family_id);
+  return { member: toMember(current), family: toFamily(familyRow), members: members.map(toMember) };
 }
 
 export interface CreateFamilyInput {
   name: string;
+  currency: string;
   painPoints: string[];
 }
 
-export async function createFamily(supabase: Client, input: CreateFamilyInput): Promise<{ id: string | null; error: string | null }> {
-  const { data, error } = await supabase
-    .from("families")
-    .insert({ name: input.name, onboarding_pain_points: input.painPoints })
-    .select("id")
-    .single();
-
-  return { id: data?.id ?? null, error: error?.message ?? null };
+export async function createFamily(store: DataStore, input: CreateFamilyInput): Promise<Family> {
+  const row = await store.create<FamilyRow>("families", {
+    name: input.name,
+    currency: input.currency,
+    security_level: "libre",
+    documents_lock_enabled: true,
+    emergency_contacts_unlocked: true,
+    onboarding_pain_points: input.painPoints,
+  } satisfies NewRow<FamilyRow>);
+  return toFamily(row);
 }
 
 export interface CreateFamilyMemberInput {
@@ -70,46 +68,22 @@ export interface CreateFamilyMemberInput {
   role: "parent" | "enfant";
   age: number | null;
   signatureColor: string;
-  accessStatus?: "managed" | "invited_pending" | "linked";
-  linkedAccountId?: string;
+  accessStatus: "managed" | "invited_pending" | "linked" | null;
+  linkedAccountId: string | null;
 }
 
-export async function createFamilyMember(supabase: Client, input: CreateFamilyMemberInput): Promise<{ id: string | null; error: string | null }> {
-  const { data, error } = await supabase
-    .from("family_members")
-    .insert({
-      family_id: input.familyId,
-      name: input.name,
-      role: input.role,
-      age: input.age,
-      signature_color: input.signatureColor,
-      access_status: input.accessStatus,
-      linked_account_id: input.linkedAccountId,
-    })
-    .select("id")
-    .single();
-
-  return { id: data?.id ?? null, error: error?.message ?? null };
-}
-
-export async function getFamilyMembers(supabase: Client, familyId: string): Promise<FamilyMember[]> {
-  if (isMockMode()) return MOCK_MEMBERS;
-
-  const { data, error } = await supabase
-    .from("family_members")
-    .select("*")
-    .eq("family_id", familyId)
-    .is("deleted_at", null);
-
-  if (error || !data) return [];
-
-  return data.map((m) => ({
-    id: m.id,
-    familyId: m.family_id,
-    name: m.name,
-    role: m.role,
-    signatureColor: m.signature_color,
-    darkModeEnabled: m.dark_mode_enabled,
-    linkedAccountId: m.linked_account_id,
-  }));
+export async function createFamilyMember(store: DataStore, input: CreateFamilyMemberInput): Promise<FamilyMember> {
+  const row = await store.create<FamilyMemberRow>("family_members", {
+    family_id: input.familyId,
+    name: input.name,
+    role: input.role,
+    access_status: input.accessStatus,
+    linked_account_id: input.linkedAccountId,
+    age: input.age,
+    signature_color: input.signatureColor,
+    dark_mode_enabled: false,
+    rdv_prive_autorise: false,
+    deleted_at: null,
+  } satisfies NewRow<FamilyMemberRow>);
+  return toMember(row);
 }

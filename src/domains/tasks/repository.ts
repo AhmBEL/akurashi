@@ -1,60 +1,39 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/shared/lib/supabase/database.types";
-import type { HomeTask } from "./types";
+import type { DataStore } from "@/shared/data/types";
 import { toDateString } from "@/shared/lib/date";
-import { isMockMode } from "@/shared/lib/mockMode";
-import { MOCK_TASKS } from "@/shared/lib/mockFixtures";
+import type { HomeTask } from "./types";
 
-type Client = SupabaseClient<Database>;
+// Le seul endroit autorisé à lire/écrire `tasks`, toujours via le DataStore.
 
-// Raw shape of the PostgREST embed below — the hand-written Database type
-// (see database.types.ts) doesn't carry relationship metadata, so this join's
-// result is asserted rather than inferred until real codegen replaces it.
-interface RawTaskWithSubject {
-  id: string;
-  title: string;
-  due_date: string | null;
-  completed_at: string | null;
-  subject: { id: string; name: string; signature_color: string } | null;
-}
+type TaskRow = Database["public"]["Tables"]["tasks"]["Row"];
+type MemberRow = Database["public"]["Tables"]["family_members"]["Row"];
 
-// The only place in the app allowed to read/write the `tasks` table directly.
+const HOME_TASK_LIMIT = 10;
 
-export async function getHomeTasks(supabase: Client, familyId: string): Promise<HomeTask[]> {
-  if (isMockMode()) return MOCK_TASKS;
-
+export async function getHomeTasks(store: DataStore, familyId: string): Promise<HomeTask[]> {
   const today = toDateString(new Date());
+  const [tasks, members] = await Promise.all([
+    store.list<TaskRow>("tasks", { family_id: familyId }),
+    store.list<MemberRow>("family_members", { family_id: familyId }),
+  ]);
+  const memberById = new Map(members.map((member) => [member.id, member]));
 
-  const { data, error } = await supabase
-    .from("tasks")
-    .select("id, title, due_date, completed_at, subject:subject_id(id, name, signature_color)")
-    .eq("family_id", familyId)
-    .lte("due_date", today)
-    .order("due_date", { ascending: true })
-    .limit(10);
-
-  if (error || !data) return [];
-
-  return (data as unknown as RawTaskWithSubject[]).map((t) => ({
-    id: t.id,
-    title: t.title,
-    dueDate: t.due_date,
-    completedAt: t.completed_at,
-    subject: t.subject
-      ? { id: t.subject.id, name: t.subject.name, signatureColor: t.subject.signature_color }
-      : null,
-  }));
+  return tasks
+    .filter((task) => task.due_date !== null && task.due_date <= today)
+    .sort((a, b) => (a.due_date as string).localeCompare(b.due_date as string))
+    .slice(0, HOME_TASK_LIMIT)
+    .map((task) => {
+      const subject = task.subject_id ? memberById.get(task.subject_id) : undefined;
+      return {
+        id: task.id,
+        title: task.title,
+        dueDate: task.due_date,
+        completedAt: task.completed_at,
+        subject: subject ? { id: subject.id, name: subject.name, signatureColor: subject.signature_color } : null,
+      };
+    });
 }
 
-export async function setTaskCompletion(
-  supabase: Client,
-  taskId: string,
-  completed: boolean
-): Promise<void> {
-  if (isMockMode()) return;
-
-  await supabase
-    .from("tasks")
-    .update({ completed_at: completed ? new Date().toISOString() : null })
-    .eq("id", taskId);
+export async function setTaskCompletion(store: DataStore, taskId: string, completed: boolean): Promise<void> {
+  await store.update<TaskRow>("tasks", taskId, { completed_at: completed ? new Date().toISOString() : null });
 }

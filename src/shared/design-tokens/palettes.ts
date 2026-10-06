@@ -27,3 +27,9 @@ export const DEFAULT_PALETTE: PaletteKey = "sauge";
 export function isPaletteKey(value: string): value is PaletteKey {
   return value in PALETTES;
 }
+
+// `signature_color` est stocké sous forme de clé de palette ("sauge"…) :
+// pour un avatar ou une pastille, on en tire la couleur sourde CSS.
+export function paletteSoftColor(key: string): string {
+  return (isPaletteKey(key) ? PALETTES[key] : PALETTES[DEFAULT_PALETTE]).soft;
+}

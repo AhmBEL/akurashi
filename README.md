@@ -2,7 +2,24 @@
 
 Application familiale privée (PWA). Voir les fichiers `.md` de référence fonctionnelle/technique fournis séparément — ce README ne couvre que la mise en route.
 
-## Prérequis
+## Deux modes, un seul code
+
+`NEXT_PUBLIC_DEMO_MODE=true` (voir `.env.local.example`) : **mode démo** — aucun login, données locales
+persistantes (IndexedDB), onboarding réel, réglages développeur dans **Réglages** (changer de profil,
+recommencer l'onboarding, réinitialiser, export/import JSON). Variable absente : **version finale**
+(Supabase, connexion par lien magique, RLS). Tous les écrans passent par la couche d'accès unique
+`src/shared/data` (`DataStore` : `LocalStore` en démo, `SupabaseStore` en finale).
+
+À couper avant toute vraie donnée de famille : en démo il n'y a ni connexion ni contrôle d'accès.
+
+```bash
+npm install
+cp .env.local.example .env.local   # DEMO_MODE=true suffit pour la démo
+npm run dev
+npm test                            # tests de la couche d'accès et des règles budget
+```
+
+## Prérequis (version finale, Supabase)
 
 - Node.js 20+
 - Un projet [Supabase](https://supabase.com) (gratuit) — cloud, pas besoin de Docker/Postgres local pour développer

@@ -1,9 +1,13 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { PillButton } from "@/shared/ui/PillButton";
 import { PALETTES, type PaletteKey } from "@/shared/design-tokens/palettes";
-import { createFamilyAction } from "../actions";
+import { getStore } from "@/shared/data/getStore";
+import { getAuthUserId } from "@/shared/session/session";
+import { DEFAULT_CURRENCY } from "@/domains/family/defaults";
+import { createFamilyFromOnboarding } from "../createFamily";
 import { PAIN_POINT_OPTIONS } from "../types";
 import styles from "./OnboardingWizard.module.css";
 
@@ -15,6 +19,7 @@ interface ChildDraft {
 }
 
 export function OnboardingWizard() {
+  const router = useRouter();
   const [flow, setFlow] = useState<"undecided" | "create" | "join">("undecided");
   const [stepIndex, setStepIndex] = useState(0);
   const [parentName, setParentName] = useState("");
@@ -74,14 +79,17 @@ export function OnboardingWizard() {
   const submit = () => {
     setError(null);
     startTransition(async () => {
-      const result = await createFamilyAction({
-        parentName,
-        parentBirthDate,
-        paletteKey,
-        painPoints,
-        children,
-      });
-      if (result?.error) setError(result.error);
+      const result = await createFamilyFromOnboarding(
+        getStore(),
+        { parentName, parentBirthDate, paletteKey, painPoints, children },
+        await getAuthUserId(),
+        DEFAULT_CURRENCY
+      );
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      router.replace("/");
     });
   };
 

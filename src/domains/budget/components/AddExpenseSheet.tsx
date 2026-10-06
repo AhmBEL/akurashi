@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { addExpenseAction } from "../actions";
+import { getStore } from "@/shared/data/getStore";
+import { addExpense } from "../repository";
 import { addExpenseFormSchema } from "../validation";
 import { toMinorUnits } from "@/shared/lib/money";
 import { toDateString } from "@/shared/lib/date";
@@ -29,8 +30,10 @@ const today = () => toDateString(new Date());
 
 export function AddExpenseSheet({ open, onClose, familyId, categories, members }: AddExpenseSheetProps) {
   const [amount, setAmount] = useState("");
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
-  const [responsibleId, setResponsibleId] = useState(members[0]?.id ?? "");
+  const [chosenCategoryId, setCategoryId] = useState("");
+  const [chosenResponsibleId, setResponsibleId] = useState("");
+  const categoryId = chosenCategoryId || categories[0]?.id || "";
+  const responsibleId = chosenResponsibleId || members[0]?.id || "";
   const [spentOn, setSpentOn] = useState(today());
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -61,16 +64,17 @@ export function AddExpenseSheet({ open, onClose, familyId, categories, members }
 
     setError(null);
     startTransition(async () => {
-      const result = await addExpenseAction({
-        familyId,
-        categoryId: parsed.data.categoryId,
-        amountMinorUnits: toMinorUnits(parsed.data.amount),
-        responsibleId: parsed.data.responsibleId,
-        spentOn: parsed.data.spentOn,
-        note: parsed.data.note,
-      });
-      if (result.error) {
-        setError(result.error);
+      try {
+        await addExpense(getStore(), {
+          familyId,
+          categoryId: parsed.data.categoryId,
+          amountMinorUnits: toMinorUnits(parsed.data.amount),
+          responsibleId: parsed.data.responsibleId,
+          spentOn: parsed.data.spentOn,
+          note: parsed.data.note,
+        });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Impossible d'enregistrer la dépense");
         return;
       }
       reset();

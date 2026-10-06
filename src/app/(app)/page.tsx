@@ -1,34 +1,31 @@
-import { createClient } from "@/shared/lib/supabase/server";
-import { getCurrentMember, getFamily } from "@/domains/family/repository";
-import { getHomeTasks } from "@/domains/tasks/repository";
-import { getHomeBudgetSummary } from "@/domains/budget/repository";
+"use client";
+
+import { useAppData } from "@/shared/session/AppDataContext";
+import { paletteSoftColor } from "@/shared/design-tokens/palettes";
+import { useHomeBudgetSummary } from "@/domains/budget/hooks";
 import { TasksBlock } from "@/domains/tasks/components/TasksBlock";
 import { BudgetCard } from "@/domains/budget/components/BudgetCard";
 import { CompactTopBar } from "@/shared/ui/CompactTopBar";
 import { SecureDocumentsCard } from "@/shared/ui/SecureDocumentsCard";
 import { QuickAccessRow } from "@/shared/ui/QuickAccessRow";
 
-export default async function HomePage() {
-  const supabase = await createClient();
-  const member = await getCurrentMember(supabase);
-  if (!member) return null; // layout already handles the no-member state
-
-  const [family, tasks, budgetSummary] = await Promise.all([
-    getFamily(supabase, member.familyId),
-    getHomeTasks(supabase, member.familyId),
-    getHomeBudgetSummary(supabase, member.familyId),
-  ]);
-
-  const currency = family?.currency ?? "EUR";
-  const defaultAmountsHidden = family?.securityLevel === "accueil_protege";
+export default function HomePage() {
+  const { member, family } = useAppData();
+  const budgetSummary = useHomeBudgetSummary(family.id);
 
   return (
     <div>
-      <CompactTopBar label="Akurashi" memberName={member.name} signatureColor={member.signatureColor} />
+      <CompactTopBar label={family.name} memberName={member.name} signatureColor={paletteSoftColor(member.signatureColor)} />
 
-      <TasksBlock tasks={tasks} />
+      <TasksBlock familyId={family.id} />
 
-      <BudgetCard summary={budgetSummary} currency={currency} defaultAmountsHidden={defaultAmountsHidden} />
+      {budgetSummary && (
+        <BudgetCard
+          summary={budgetSummary}
+          currency={family.currency}
+          defaultAmountsHidden={family.securityLevel === "accueil_protege"}
+        />
+      )}
 
       <SecureDocumentsCard />
 
