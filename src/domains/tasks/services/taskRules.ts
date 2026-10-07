@@ -71,3 +71,11 @@ export function describeRecurrence(recurrenceDays: number[]): string {
     .map((day) => WEEKDAY_LABELS[day])
     .join(" ");
 }
+
+// L'heure de fin est facultative, mais exige une heure de début et doit la suivre.
+// Accepte « HH:MM » (saisie) comme « HH:MM:SS » (base).
+export function validateTimeRange(start: string | null, end: string | null): string | null {
+  if (!end) return null;
+  if (!start) return "Indique l'heure de début avant l'heure de fin.";
+  return end.slice(0, 5) > start.slice(0, 5) ? null : "L'heure de fin doit être après l'heure de début.";
+}

@@ -1,5 +1,5 @@
-import { StubScreen } from "@/shared/ui/StubScreen";
+import { AgendaScreen } from "@/domains/agenda/components/AgendaScreen";
 
 export default function AgendaPage() {
-  return <StubScreen title="Agenda" />;
+  return <AgendaScreen />;
 }

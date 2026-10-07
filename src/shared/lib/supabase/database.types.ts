@@ -59,6 +59,7 @@ export interface Database {
           description: string | null;
           due_date: string | null;
           due_time: string | null;
+          due_end_time: string | null;
           subject_id: string | null;
           actor_id: string | null;
           location_contact_id: string | null;

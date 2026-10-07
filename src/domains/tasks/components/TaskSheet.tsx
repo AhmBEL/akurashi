@@ -21,6 +21,7 @@ const titleSchema = z.string().trim().min(1, "Donne un titre à la tâche");
 interface TaskSheetProps {
   open: boolean;
   onClose: () => void;
+  defaultDate?: string;
   // Tâche d'un Sujet : rattachée à lui, assignable à ses participants seulement.
   sujetId?: string;
   assignableIds?: string[];
@@ -29,7 +30,7 @@ interface TaskSheetProps {
 
 // Fiche tâche / rendez-vous (écran 04 #4) : un rendez-vous est une tâche avec
 // une date et une heure. Les participants déterminent l'assignation.
-export function TaskSheet({ open, onClose, sujetId, assignableIds, sujetPrivate = false }: TaskSheetProps) {
+export function TaskSheet({ open, onClose, defaultDate, sujetId, assignableIds, sujetPrivate = false }: TaskSheetProps) {
   const { member, family, members } = useAppData();
   const categories = useTaskCategories(family.id) ?? [];
   const budgetCategories = useCategoryOptions(family.id) ?? [];
@@ -38,8 +39,11 @@ export function TaskSheet({ open, onClose, sujetId, assignableIds, sujetPrivate 
   const [categoryId, setCategoryId] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [locationText, setLocationText] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  // Sans choix explicite, la date proposée par l'appelant (ex. le jour affiché dans l'agenda).
+  const [chosenDate, setChosenDate] = useState<string | null>(null);
+  const dueDate = chosenDate ?? defaultDate ?? "";
   const [dueTime, setDueTime] = useState("");
+  const [dueEndTime, setDueEndTime] = useState("");
   const [chosenParticipants, setChosenParticipants] = useState<string[] | null>(null);
   const [discuss, setDiscuss] = useState(false);
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
@@ -61,6 +65,8 @@ export function TaskSheet({ open, onClose, sujetId, assignableIds, sujetPrivate 
     .filter((candidate) => candidate.id === member.id || candidate.role === "enfant" || hasOtherParent(family.settings))
     .filter((candidate) => !assignableIds || assignableIds.includes(candidate.id));
   const canDiscuss = hasOtherParent(family.settings) && members.some((candidate) => candidate.role === "parent" && candidate.id !== member.id);
+  // Un enfant ne peut bloquer un créneau privé que si un parent l'a autorisé (Réglages).
+  const canPrivate = member.role === "parent" || member.rdvPriveAutorise;
   const canAddBudget = member.role === "parent" && family.settings.budgetEnabled;
   const categoryName = categories.find((category) => category.id === categoryId)?.name;
 
@@ -76,8 +82,9 @@ export function TaskSheet({ open, onClose, sujetId, assignableIds, sujetPrivate 
     setCategoryId(null);
     setDescription("");
     setLocationText("");
-    setDueDate("");
+    setChosenDate(null);
     setDueTime("");
+    setDueEndTime("");
     setChosenParticipants(null);
     setDiscuss(false);
     setRecurrenceDays([]);
@@ -109,6 +116,7 @@ export function TaskSheet({ open, onClose, sujetId, assignableIds, sujetPrivate 
           description: description.trim() || null,
           dueDate: dueDate || null,
           dueTime: dueTime || null,
+          dueEndTime: (dueTime && dueEndTime) || null,
           locationText: locationText.trim() || null,
           participantIds,
           discuss,
@@ -207,7 +215,9 @@ export function TaskSheet({ open, onClose, sujetId, assignableIds, sujetPrivate 
           </div>
           <div className={styles.hint}>
             {taskIsPrivate
-              ? "Tâche privée : visible par toi seul."
+              ? member.role === "enfant"
+                ? "Créneau privé : tes parents verront seulement « Occupé »."
+                : "Tâche privée : visible par toi seul."
               : discuss
                 ? "Signalée à l'autre parent, sans assignation."
                 : participantIds.length === 0
@@ -223,13 +233,21 @@ export function TaskSheet({ open, onClose, sujetId, assignableIds, sujetPrivate 
         <div className={styles.row}>
           <div className={styles.field}>
             <label htmlFor="task-date">Date</label>
-            <input id="task-date" className={styles.input} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+            <input id="task-date" className={styles.input} type="date" value={dueDate} onChange={(e) => setChosenDate(e.target.value)} />
           </div>
           <div className={styles.field}>
             <label htmlFor="task-time">Heure</label>
             <input id="task-time" className={styles.input} type="time" value={dueTime} onChange={(e) => setDueTime(e.target.value)} />
           </div>
         </div>
+
+        {dueTime && (
+          <div className={styles.field}>
+            <label htmlFor="task-end-time">Heure de fin (optionnel)</label>
+            <input id="task-end-time" className={styles.input} type="time" value={dueEndTime} onChange={(e) => setDueEndTime(e.target.value)} />
+            <div className={styles.hint}>Avec une heure de fin, ce créneau apparaît comme temps occupé dans l&rsquo;agenda.</div>
+          </div>
+        )}
 
         <div className={styles.field}>
           <label>Répéter chaque semaine</label>
@@ -254,7 +272,7 @@ export function TaskSheet({ open, onClose, sujetId, assignableIds, sujetPrivate 
 
         <div className={styles.chips}>
           <Chip active={isUrgent} onClick={() => setIsUrgent(!isUrgent)}>Urgent</Chip>
-          {!sujetId && <Chip active={isPrivate} onClick={() => setIsPrivate(!isPrivate)}>Privé</Chip>}
+          {!sujetId && canPrivate && <Chip active={isPrivate} onClick={() => setIsPrivate(!isPrivate)}>Privé</Chip>}
         </div>
 
         {canAddBudget && (

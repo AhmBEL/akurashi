@@ -2,8 +2,8 @@ import { now } from "@/shared/lib/clock";
 import type { Database } from "@/shared/lib/supabase/database.types";
 import type { BaseRow, DataStore, NewRow } from "@/shared/data/types";
 import { notify } from "@/domains/notifications/repository";
-import { deriveAssignment, isTaskDone, isVisibleTo } from "./services/taskRules";
-import type { MemberRef, TaskView } from "./types";
+import { deriveAssignment, isTaskDone, isVisibleTo, validateTimeRange } from "./services/taskRules";
+import type { AgendaTask, MemberRef, TaskView } from "./types";
 
 // Le seul endroit autorisé à lire/écrire `tasks` et ses tables de liaison,
 // toujours via le DataStore.
@@ -42,6 +42,7 @@ export interface CreateTaskInput {
   description: string | null;
   dueDate: string | null;
   dueTime: string | null;
+  dueEndTime?: string | null;
   locationText: string | null;
   participantIds: string[];
   discuss: boolean;
@@ -53,6 +54,8 @@ export interface CreateTaskInput {
 }
 
 export async function createTask(store: DataStore, input: CreateTaskInput): Promise<string> {
+  const timeError = validateTimeRange(input.dueTime, input.dueEndTime ?? null);
+  if (timeError) throw new Error(timeError);
   // Une tâche privée n'est visible que de son créateur : elle ne peut être qu'à lui.
   const participantIds = input.isPrivate ? [input.creatorId] : input.participantIds;
   const discuss = input.isPrivate ? false : input.discuss;
@@ -64,6 +67,7 @@ export async function createTask(store: DataStore, input: CreateTaskInput): Prom
     description: input.description,
     due_date: input.dueDate,
     due_time: input.dueTime,
+    due_end_time: input.dueEndTime ?? null,
     subject_id: plan.subjectId,
     actor_id: input.creatorId,
     location_contact_id: null,
@@ -165,6 +169,7 @@ function toTaskView(task: TaskRow, context: TaskContext, today: Date): TaskView 
     description: task.description,
     dueDate: task.due_date,
     dueTime: task.due_time,
+    dueEndTime: task.due_end_time,
     locationText: task.location_text,
     assignmentStatus: task.assignment_status,
     isUrgent: task.is_urgent,
@@ -230,6 +235,56 @@ export async function getTasksOfSujet(
     .filter((task) => task.sujet_id === sujetId && isVisibleToViewer(task, viewerId))
     .map((task) => toTaskView(task, context, today))
     .sort(byDoneThenDate);
+}
+
+// Les tâches qui peuvent figurer dans l'agenda, vues par `viewerId` : datées, ou
+// récurrentes avec une heure. Le placement par jour est fait par les règles de l'agenda.
+// - parent : tout ce qui est visible pour lui ; le créneau privé d'un enfant apparaît
+//   anonymisé (« Occupé »), jamais caché : les parents voient toujours le temps pris ;
+// - enfant autonome : ses propres éléments seulement ; enfant accompagné : pas d'agenda.
+export async function getAgendaTasks(
+  store: DataStore,
+  familyId: string,
+  viewerId: string,
+  today: Date = now()
+): Promise<AgendaTask[]> {
+  const context = await loadTaskContext(store, familyId);
+  const viewer = context.members.find((member) => member.id === viewerId);
+  if (!viewer || (viewer.role === "enfant" && viewer.access_status === "managed")) return [];
+  const memberById = new Map(context.members.map((member) => [member.id, member]));
+
+  const result: AgendaTask[] = [];
+  for (const task of context.tasks) {
+    const recurring = task.recurrence_days.length > 0;
+    if (!(task.due_date || (recurring && task.due_time))) continue;
+
+    const participantIds = context.participants.filter((p) => p.task_id === task.id).map((p) => p.member_id);
+    const creator = task.actor_id ? memberById.get(task.actor_id) : undefined;
+
+    if (task.visibility === "private") {
+      if (task.actor_id === viewerId) {
+        result.push({ ...toTaskView(task, context, today), busyOnly: false });
+      } else if (viewer.role === "parent" && creator?.role === "enfant") {
+        const view = toTaskView(task, context, today);
+        result.push({
+          ...view,
+          title: "Occupé",
+          description: null,
+          locationText: null,
+          categoryNames: [],
+          sujetId: null,
+          isUrgent: false,
+          participants: view.creator ? [view.creator] : [],
+          busyOnly: true,
+        });
+      }
+      continue;
+    }
+
+    const mine = task.actor_id === viewerId || participantIds.includes(viewerId) || (participantIds.length === 0 && task.subject_id === viewerId);
+    if (viewer.role === "parent" || mine) result.push({ ...toTaskView(task, context, today), busyOnly: false });
+  }
+  return result;
 }
 
 export async function setTaskCompletion(store: DataStore, taskId: string, completed: boolean): Promise<void> {

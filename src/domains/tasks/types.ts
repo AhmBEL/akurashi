@@ -13,6 +13,7 @@ export interface TaskView {
   description: string | null;
   dueDate: string | null;
   dueTime: string | null;
+  dueEndTime: string | null;
   locationText: string | null;
   assignmentStatus: AssignmentStatus;
   isUrgent: boolean;
@@ -27,3 +28,9 @@ export interface TaskView {
 }
 
 export type TaskBucket = "perso" | "famille" | "ponctuelles";
+
+// Élément de l'agenda : une tâche datée, ou récurrente avec heure. `busyOnly` :
+// créneau privé d'un enfant vu par un parent — seule l'heure et la personne restent.
+export interface AgendaTask extends TaskView {
+  busyOnly: boolean;
+}
