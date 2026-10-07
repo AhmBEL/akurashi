@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getStore } from "@/shared/data/getStore";
 import { useFamilyState } from "@/domains/family/hooks";
 import { settleDirectDebits } from "@/domains/budget/repository";
+import { archiveExpiredSujets } from "@/domains/sujets/repository";
 import { getThemeVars } from "@/shared/design-tokens/theme";
 import { AppDataProvider } from "@/shared/session/AppDataContext";
 import { AppShell } from "./AppShell";
@@ -27,6 +28,11 @@ export function AppBootstrap({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (familyId && budgetEnabled) void settleDirectDebits(getStore(), familyId);
   }, [familyId, budgetEnabled]);
+
+  // Les Sujets à clôture automatique dont la date est passée passent aux Archives.
+  useEffect(() => {
+    if (familyId) void archiveExpiredSujets(getStore(), familyId);
+  }, [familyId]);
 
   if (!state) return null;
 

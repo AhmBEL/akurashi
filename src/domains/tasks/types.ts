@@ -17,6 +17,7 @@ export interface TaskView {
   assignmentStatus: AssignmentStatus;
   isUrgent: boolean;
   isPrivate: boolean;
+  sujetId: string | null;
   recurrenceDays: number[]; // 0 = lundi … 6 = dimanche ; vide = ponctuelle
   completedAt: string | null;
   done: boolean;

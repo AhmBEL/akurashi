@@ -21,11 +21,15 @@ const titleSchema = z.string().trim().min(1, "Donne un titre à la tâche");
 interface TaskSheetProps {
   open: boolean;
   onClose: () => void;
+  // Tâche d'un Sujet : rattachée à lui, assignable à ses participants seulement.
+  sujetId?: string;
+  assignableIds?: string[];
+  sujetPrivate?: boolean;
 }
 
 // Fiche tâche / rendez-vous (écran 04 #4) : un rendez-vous est une tâche avec
 // une date et une heure. Les participants déterminent l'assignation.
-export function TaskSheet({ open, onClose }: TaskSheetProps) {
+export function TaskSheet({ open, onClose, sujetId, assignableIds, sujetPrivate = false }: TaskSheetProps) {
   const { member, family, members } = useAppData();
   const categories = useTaskCategories(family.id) ?? [];
   const budgetCategories = useCategoryOptions(family.id) ?? [];
@@ -50,9 +54,12 @@ export function TaskSheet({ open, onClose }: TaskSheetProps) {
   if (!open) return null;
 
   // Sans choix explicite, la tâche est auto-assignée au créateur.
-  const participantIds = isPrivate ? [member.id] : discuss ? [] : (chosenParticipants ?? [member.id]);
+  const taskIsPrivate = isPrivate || sujetPrivate;
+  const participantIds = taskIsPrivate ? [member.id] : discuss ? [] : (chosenParticipants ?? [member.id]);
   // « Pas d'autre parent » (onboarding) : pas d'assignation à l'autre parent.
-  const assignable = members.filter((candidate) => candidate.id === member.id || candidate.role === "enfant" || hasOtherParent(family.settings));
+  const assignable = members
+    .filter((candidate) => candidate.id === member.id || candidate.role === "enfant" || hasOtherParent(family.settings))
+    .filter((candidate) => !assignableIds || assignableIds.includes(candidate.id));
   const canDiscuss = hasOtherParent(family.settings) && members.some((candidate) => candidate.role === "parent" && candidate.id !== member.id);
   const canAddBudget = member.role === "parent" && family.settings.budgetEnabled;
   const categoryName = categories.find((category) => category.id === categoryId)?.name;
@@ -107,8 +114,9 @@ export function TaskSheet({ open, onClose }: TaskSheetProps) {
           discuss,
           recurrenceDays,
           isUrgent,
-          isPrivate,
+          isPrivate: taskIsPrivate,
           categoryId,
+          sujetId: sujetId ?? null,
         });
         // Budget de la tâche : une dépense prévue, liée à la tâche, à faire valider par l'autre parent.
         if (withBudget) {
@@ -188,17 +196,17 @@ export function TaskSheet({ open, onClose }: TaskSheetProps) {
               <Chip
                 key={candidate.id}
                 active={participantIds.includes(candidate.id)}
-                onClick={() => !isPrivate && toggleParticipant(candidate.id)}
+                onClick={() => !taskIsPrivate && toggleParticipant(candidate.id)}
               >
                 {candidate.id === member.id ? `${candidate.name} (moi)` : candidate.name}
               </Chip>
             ))}
-            {canDiscuss && !isPrivate && (
+            {canDiscuss && !taskIsPrivate && (
               <Chip active={discuss} onClick={() => setDiscuss(!discuss)}>À discuter</Chip>
             )}
           </div>
           <div className={styles.hint}>
-            {isPrivate
+            {taskIsPrivate
               ? "Tâche privée : visible par toi seul."
               : discuss
                 ? "Signalée à l'autre parent, sans assignation."
@@ -246,7 +254,7 @@ export function TaskSheet({ open, onClose }: TaskSheetProps) {
 
         <div className={styles.chips}>
           <Chip active={isUrgent} onClick={() => setIsUrgent(!isUrgent)}>Urgent</Chip>
-          <Chip active={isPrivate} onClick={() => setIsPrivate(!isPrivate)}>Privé</Chip>
+          {!sujetId && <Chip active={isPrivate} onClick={() => setIsPrivate(!isPrivate)}>Privé</Chip>}
         </div>
 
         {canAddBudget && (

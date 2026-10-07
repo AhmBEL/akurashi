@@ -6,6 +6,7 @@ import { useAppData } from "@/shared/session/AppDataContext";
 import { useCategoryOptions } from "@/domains/budget/hooks";
 import { AddExpenseSheet } from "@/domains/budget/components/AddExpenseSheet";
 import { TaskSheet } from "@/domains/tasks/components/TaskSheet";
+import { SujetSheet } from "@/domains/sujets/components/SujetSheet";
 import { isModuleActive } from "@/domains/family/settings";
 import { BottomNav } from "./BottomNav";
 import { QuickCreateSheet } from "./QuickCreateSheet";
@@ -18,6 +19,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
   const [quickOpen, setQuickOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
+  const [sujetOpen, setSujetOpen] = useState(false);
   const router = useRouter();
 
   const goTo = (path: string) => () => {
@@ -51,8 +53,18 @@ export function AppChrome({ children }: { children: ReactNode }) {
         setTaskOpen(true);
       },
     },
-    ...(isModuleActive(settings, "sujets")
-      ? [{ mark: "SU", label: "Sujet", sub: "Un projet à suivre à plusieurs", onSelect: goTo("/sujets") }]
+    ...(isModuleActive(settings, "sujets") && member.role === "parent"
+      ? [
+          {
+            mark: "SU",
+            label: "Sujet",
+            sub: "Un projet à suivre à plusieurs",
+            onSelect: () => {
+              setQuickOpen(false);
+              setSujetOpen(true);
+            },
+          },
+        ]
       : []),
     ...(isModuleActive(settings, "documents")
       ? [{ mark: "DO", label: "Document", sub: "Un fichier dans le coffre sécurisé", onSelect: goTo("/documents") }]
@@ -75,6 +87,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
       </div>
       <QuickCreateSheet open={quickOpen} onClose={() => setQuickOpen(false)} items={quickItems} />
       <TaskSheet open={taskOpen} onClose={() => setTaskOpen(false)} />
+      <SujetSheet open={sujetOpen} onClose={() => setSujetOpen(false)} onCreated={(id) => router.push(`/sujets/${id}`)} />
       <AddExpenseSheet
         open={addExpenseOpen}
         onClose={() => setAddExpenseOpen(false)}

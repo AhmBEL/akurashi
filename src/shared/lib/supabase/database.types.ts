@@ -227,6 +227,61 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["task_categories_link"]["Row"]>;
         Relationships: [];
       };
+      sujets: {
+        Row: {
+          id: string;
+          family_id: string;
+          title: string;
+          description: string | null;
+          template: "anniversaire" | "vacances" | "achat_important" | "rentree_scolaire" | "autre" | null;
+          closure_mode: "auto_after_date" | "manuel";
+          status: "ouvert" | "archive";
+          visibility: "prive" | "parents" | "famille";
+          event_date: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["sujets"]["Row"]> & { family_id: string; title: string };
+        Update: Partial<Database["public"]["Tables"]["sujets"]["Row"]>;
+        Relationships: [];
+      };
+      // Table de liaison : clé composite en base, pas de colonne `id`.
+      sujet_participants: {
+        Row: {
+          sujet_id: string;
+          member_id: string;
+        };
+        Insert: Database["public"]["Tables"]["sujet_participants"]["Row"];
+        Update: Partial<Database["public"]["Tables"]["sujet_participants"]["Row"]>;
+        Relationships: [];
+      };
+      sujet_links: {
+        Row: {
+          id: string;
+          sujet_id: string;
+          label: string;
+          url: string;
+          added_by: string | null;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["sujet_links"]["Row"]> & { sujet_id: string; label: string; url: string };
+        Update: Partial<Database["public"]["Tables"]["sujet_links"]["Row"]>;
+        Relationships: [];
+      };
+      task_comments: {
+        Row: {
+          id: string;
+          task_id: string | null;
+          sujet_id: string | null;
+          author_id: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: Partial<Database["public"]["Tables"]["task_comments"]["Row"]> & { author_id: string; content: string };
+        Update: Partial<Database["public"]["Tables"]["task_comments"]["Row"]>;
+        Relationships: [];
+      };
       notifications: {
         Row: {
           id: string;

@@ -82,6 +82,13 @@ export function createLocalStore(dbName = "akurashi"): DataStore {
       bus.emit(table);
     },
 
+    async removeWhere(table: string, filter: Filter) {
+      const db = await getDb();
+      const records: StoredRecord[] = await db.getAllFromIndex(STORE, "table", table);
+      for (const record of records.filter((candidate) => matches(candidate.data, filter))) await db.delete(STORE, record.key);
+      bus.emit(table);
+    },
+
     subscribe: (table, callback) => bus.subscribe(table, callback),
 
     async clearAll() {

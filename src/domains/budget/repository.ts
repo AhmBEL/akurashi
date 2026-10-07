@@ -517,3 +517,19 @@ export async function getBudgetPage(store: DataStore, familyId: string, memberId
     hasOtherParent,
   };
 }
+
+// Dépenses liées à des tâches (ex. celles d'un Sujet) : total validé / en attente de validation.
+export async function getBudgetOfTasks(
+  store: DataStore,
+  familyId: string,
+  taskIds: string[]
+): Promise<{ validated: number; pending: number } | null> {
+  const ids = new Set(taskIds);
+  const linked = (await store.list<LineRow>("budget_lines", { family_id: familyId })).filter(
+    (line) => line.task_id !== null && ids.has(line.task_id)
+  );
+  if (linked.length === 0) return null;
+  const sum = (statuses: ValidationStatus[]) =>
+    linked.filter((line) => statuses.includes(line.validation_status)).reduce((total, line) => total + line.amount, 0);
+  return { validated: sum(["validee", "ajustee"]), pending: sum(["proposee"]) };
+}

@@ -54,6 +54,16 @@ export function createSupabaseStore(): DataStore {
       bus.emit(table);
     },
 
+    async removeWhere(table: string, filter: Filter) {
+      let query = supabase.from(table).delete();
+      for (const [field, value] of Object.entries(filter)) {
+        query = value === null ? query.is(field, null) : query.eq(field, value);
+      }
+      const { error } = await query;
+      if (error) fail(error.message);
+      bus.emit(table);
+    },
+
     subscribe: (table, callback) => bus.subscribe(table, callback),
 
     clearAll: () => fail("Réservé au mode démo"),

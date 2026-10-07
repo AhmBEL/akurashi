@@ -29,6 +29,8 @@ export interface DataStore {
   create<T extends BaseRow>(table: string, data: NewRow<T>): Promise<T>;
   update<T extends BaseRow>(table: string, id: string, patch: Partial<T>): Promise<T>;
   remove(table: string, id: string): Promise<void>;
+  // Suppression par filtre d'égalité : seule façon de retirer une ligne d'une table de liaison (clé composite, pas d'id).
+  removeWhere(table: string, filter: Filter): Promise<void>;
   subscribe(table: string, callback: () => void): () => void;
   // Outils développeur (démo uniquement).
   clearAll(): Promise<void>;
