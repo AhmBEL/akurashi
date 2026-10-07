@@ -1,3 +1,4 @@
+import { now } from "@/shared/lib/clock";
 import type { Database } from "@/shared/lib/supabase/database.types";
 import type { DataStore, NewRow } from "@/shared/data/types";
 import { startOfWeek, toDateString } from "@/shared/lib/date";
@@ -52,7 +53,7 @@ export async function toggleTaskCompletion(store: DataStore, input: ToggleComple
     task_id: input.taskId,
     subject_id: input.subjectId,
     actor_id: input.actorId,
-    completed_on: toDateString(new Date()),
+    completed_on: toDateString(now()),
     undone_at: null,
   } satisfies NewRow<CompletionRow>);
 
@@ -87,7 +88,7 @@ async function findLastAction(store: DataStore, childId: string): Promise<Comple
   return latest && latest.undone_at === null ? latest : null;
 }
 
-export async function getChildProgress(store: DataStore, childId: string, today: Date = new Date()): Promise<ChildProgress> {
+export async function getChildProgress(store: DataStore, childId: string, today: Date = now()): Promise<ChildProgress> {
   const monday = startOfWeek(today);
   const weekStart = toDateString(monday);
   const nextWeekStart = toDateString(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 7));

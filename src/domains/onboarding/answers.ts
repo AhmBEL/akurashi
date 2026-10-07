@@ -129,6 +129,7 @@ export function normalizeOnboarding(draft: OnboardingDraft): OnboardingAnswers {
       inviteCode: null,
       budgetEnabled,
       budgetResetDay: Math.min(28, Math.max(1, Math.round(draft.budgetResetDay ?? DEFAULT_FAMILY_SETTINGS.budgetResetDay))),
+      expenseShortcuts: DEFAULT_FAMILY_SETTINGS.expenseShortcuts,
       modules,
       recomposedFamily: draft.recomposedFamily ?? DEFAULT_FAMILY_SETTINGS.recomposedFamily,
     },

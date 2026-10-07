@@ -110,6 +110,8 @@ export interface Database {
           task_id: string | null;
           receipt_photo_url: string | null;
           note: string | null;
+          is_direct_debit: boolean;
+          debit_day: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -129,6 +131,7 @@ export interface Database {
           period_month: string;
           status: "paye" | "non_paye";
           paid_at: string | null;
+          amount: number | null;
         };
         Insert: Partial<Database["public"]["Tables"]["budget_line_cycles"]["Row"]> & {
           budget_line_id: string;

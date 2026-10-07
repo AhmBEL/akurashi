@@ -91,3 +91,15 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hint {
+  font-size: 11.5px;
+  color: var(--fa-muted);
+  margin-top: 6px;
+}

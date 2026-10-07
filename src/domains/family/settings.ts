@@ -18,6 +18,18 @@ export const MODULE_LABELS: Record<ModuleKey, string> = {
 export const OTHER_PARENT_MODES = ["none", "later", "invite_now"] as const;
 export type OtherParentMode = (typeof OTHER_PARENT_MODES)[number];
 
+// Raccourcis d'ajout rapide d'une dépense (un tap), modifiables dans Réglages → Budget.
+export const DEFAULT_EXPENSE_SHORTCUTS = [
+  "Café",
+  "Goûter",
+  "Plein d'essence",
+  "Péage",
+  "Parking",
+  "Pharmacie",
+  "Boulangerie",
+  "Babysitting",
+];
+
 const modulesSchema = z.object({
   sujets: z.boolean().default(true),
   courses: z.boolean().default(true),
@@ -31,6 +43,7 @@ export const familySettingsSchema = z.object({
   inviteCode: z.string().nullable().default(null),
   budgetEnabled: z.boolean().default(true),
   budgetResetDay: z.number().int().min(1).max(28).default(1),
+  expenseShortcuts: z.array(z.string()).default(DEFAULT_EXPENSE_SHORTCUTS),
   modules: modulesSchema.prefault({}),
   recomposedFamily: z.boolean().default(false),
 });

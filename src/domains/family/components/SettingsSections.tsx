@@ -155,6 +155,14 @@ export function SettingsSections() {
                 />
               </div>
             ))}
+            <div style={labelStyle}>Raccourcis d&rsquo;ajout rapide d&rsquo;une dépense (séparés par des virgules)</div>
+            <BlurInput
+              label="Raccourcis de dépense"
+              value={settings.expenseShortcuts.join(", ")}
+              onCommit={(value) =>
+                saveSettings({ expenseShortcuts: value.split(",").map((shortcut) => shortcut.trim()).filter(Boolean) })
+              }
+            />
           </>
         )}
       </Section>

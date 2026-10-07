@@ -4,7 +4,12 @@ import { useState, useTransition } from "react";
 import { z } from "zod";
 import { getStore } from "@/shared/data/getStore";
 import { useAppData } from "@/shared/session/AppDataContext";
+import { now } from "@/shared/lib/clock";
+import { toDateString } from "@/shared/lib/date";
+import { toMinorUnits } from "@/shared/lib/money";
 import { hasOtherParent } from "@/domains/family/settings";
+import { useCategoryOptions } from "@/domains/budget/hooks";
+import { addExpense } from "@/domains/budget/repository";
 import { Chip } from "@/domains/onboarding/components/steps/ui";
 import { TASK_TEMPLATES, WEEKDAY_LABELS } from "../defaults";
 import { useTaskCategories } from "../hooks";
@@ -23,6 +28,7 @@ interface TaskSheetProps {
 export function TaskSheet({ open, onClose }: TaskSheetProps) {
   const { member, family, members } = useAppData();
   const categories = useTaskCategories(family.id) ?? [];
+  const budgetCategories = useCategoryOptions(family.id) ?? [];
 
   const [title, setTitle] = useState("");
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -35,6 +41,9 @@ export function TaskSheet({ open, onClose }: TaskSheetProps) {
   const [recurrenceDays, setRecurrenceDays] = useState<number[]>([]);
   const [isUrgent, setIsUrgent] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [withBudget, setWithBudget] = useState(false);
+  const [budgetAmount, setBudgetAmount] = useState("");
+  const [budgetCategoryId, setBudgetCategoryId] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -45,6 +54,7 @@ export function TaskSheet({ open, onClose }: TaskSheetProps) {
   // « Pas d'autre parent » (onboarding) : pas d'assignation à l'autre parent.
   const assignable = members.filter((candidate) => candidate.id === member.id || candidate.role === "enfant" || hasOtherParent(family.settings));
   const canDiscuss = hasOtherParent(family.settings) && members.some((candidate) => candidate.role === "parent" && candidate.id !== member.id);
+  const canAddBudget = member.role === "parent" && family.settings.budgetEnabled;
   const categoryName = categories.find((category) => category.id === categoryId)?.name;
 
   const toggleParticipant = (id: string) => {
@@ -66,6 +76,8 @@ export function TaskSheet({ open, onClose }: TaskSheetProps) {
     setRecurrenceDays([]);
     setIsUrgent(false);
     setIsPrivate(false);
+    setWithBudget(false);
+    setBudgetAmount("");
     setError(null);
   };
 
@@ -75,10 +87,15 @@ export function TaskSheet({ open, onClose }: TaskSheetProps) {
       setError(parsedTitle.error.issues[0].message);
       return;
     }
+    const budget = Number(budgetAmount);
+    if (withBudget && !(budget > 0)) {
+      setError("Indique le montant du budget de cette tâche");
+      return;
+    }
     setError(null);
     startTransition(async () => {
       try {
-        await createTask(getStore(), {
+        const taskId = await createTask(getStore(), {
           familyId: family.id,
           creatorId: member.id,
           title: parsedTitle.data,
@@ -93,6 +110,22 @@ export function TaskSheet({ open, onClose }: TaskSheetProps) {
           isPrivate,
           categoryId,
         });
+        // Budget de la tâche : une dépense prévue, liée à la tâche, à faire valider par l'autre parent.
+        if (withBudget) {
+          await addExpense(getStore(), {
+            familyId: family.id,
+            actorId: member.id,
+            categoryId: budgetCategoryId || budgetCategories[0]?.id || null,
+            newCategoryName: budgetCategories.length === 0 ? "Autre" : null,
+            amountMinorUnits: toMinorUnits(budget),
+            financialType: "variable_prevue",
+            responsibleId: member.id,
+            spentOn: dueDate || toDateString(now()),
+            note: parsedTitle.data,
+            taskId,
+            requestValidation: true,
+          });
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Impossible d'enregistrer la tâche");
         return;
@@ -215,6 +248,46 @@ export function TaskSheet({ open, onClose }: TaskSheetProps) {
           <Chip active={isUrgent} onClick={() => setIsUrgent(!isUrgent)}>Urgent</Chip>
           <Chip active={isPrivate} onClick={() => setIsPrivate(!isPrivate)}>Privé</Chip>
         </div>
+
+        {canAddBudget && (
+          <div className={styles.field} style={{ marginTop: 12 }}>
+            <div className={styles.chips}>
+              <Chip active={withBudget} onClick={() => setWithBudget(!withBudget)}>Ajouter un budget à cette tâche</Chip>
+            </div>
+            {withBudget && (
+              <div className={styles.row} style={{ marginTop: 8 }}>
+                <div className={styles.field}>
+                  <label htmlFor="task-budget-amount">Montant</label>
+                  <input
+                    id="task-budget-amount"
+                    className={styles.input}
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    value={budgetAmount}
+                    onChange={(e) => setBudgetAmount(e.target.value)}
+                  />
+                </div>
+                {budgetCategories.length > 0 && (
+                  <div className={styles.field}>
+                    <label htmlFor="task-budget-category">Catégorie</label>
+                    <select
+                      id="task-budget-category"
+                      className={styles.input}
+                      value={budgetCategoryId || budgetCategories[0].id}
+                      onChange={(e) => setBudgetCategoryId(e.target.value)}
+                    >
+                      {budgetCategories.map((category) => (
+                        <option key={category.id} value={category.id}>{category.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {error && <div className={styles.error}>{error}</div>}
 

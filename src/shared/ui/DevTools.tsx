@@ -7,6 +7,7 @@ import type { ExportBlob } from "@/shared/data/types";
 import { useAppData } from "@/shared/session/AppDataContext";
 import { setStoredMemberId } from "@/shared/session/session";
 import { toDateString } from "@/shared/lib/date";
+import { advanceClock, getClockOffsetDays, now, setClockOffsetDays, type ClockStep } from "@/shared/lib/clock";
 import { DEFAULT_PALETTE, PALETTES } from "@/shared/design-tokens/palettes";
 import { createFamilyMember } from "@/domains/family/repository";
 import { PillButton } from "./PillButton";
@@ -50,6 +51,13 @@ export function DevTools() {
     setMessage("Parent de test ajouté : choisis-le dans « Profil ».");
   };
 
+  // Les dates métier lisent l'horloge au chargement : on recharge pour tout recalculer.
+  const moveClock = (step: ClockStep | "reset") => {
+    if (step === "reset") setClockOffsetDays(0);
+    else advanceClock(step);
+    window.location.reload();
+  };
+
   const exportJson = async () => {
     const blob = await getStore().exportAll();
     const url = URL.createObjectURL(new Blob([JSON.stringify(blob, null, 2)], { type: "application/json" }));
@@ -85,6 +93,18 @@ export function DevTools() {
             {candidate.name} · {candidate.role}
           </PillButton>
         ))}
+      </div>
+
+      <div style={sectionTitle}>Horloge de démo</div>
+      <p style={{ fontSize: 13, color: "var(--fa-muted)", margin: "0 0 10px" }}>
+        Date vue par l&rsquo;app : {toDateString(now())}
+        {getClockOffsetDays() !== 0 && ` (décalée de ${getClockOffsetDays()} jours)`}. Pour voir le passage d&rsquo;un prélèvement ou du jour de remise à zéro.
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+        <PillButton onClick={() => moveClock("day")}>+1 jour</PillButton>
+        <PillButton onClick={() => moveClock("week")}>+1 semaine</PillButton>
+        <PillButton onClick={() => moveClock("month")}>+1 mois</PillButton>
+        <PillButton onClick={() => moveClock("reset")}>Aujourd&rsquo;hui</PillButton>
       </div>
 
       <div style={sectionTitle}>Données</div>

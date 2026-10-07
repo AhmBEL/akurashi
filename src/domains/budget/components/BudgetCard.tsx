@@ -15,7 +15,7 @@ interface BudgetCardProps {
   defaultAmountsHidden: boolean;
 }
 
-const STATUS_LABEL: Record<HomeBudgetSummary["fixedChargesStatus"], string> = {
+const STATUS_LABEL: Record<NonNullable<HomeBudgetSummary["fixedChargesStatus"]>, string> = {
   rouge: "Aucune charge fixe traitée ce mois-ci",
   orange: "Au moins une charge fixe traitée",
 };
@@ -30,10 +30,12 @@ export function BudgetCard({ summary, currency, defaultAmountsHidden }: BudgetCa
       <div className={styles.head}>
         <div>
           <div className={styles.title}>Budget</div>
-          <div className={styles.statusRow}>
-            <span className={styles.dot} style={{ background: dotColor }} />
-            <span className={styles.statusLabel}>{STATUS_LABEL[summary.fixedChargesStatus]}</span>
-          </div>
+          {summary.fixedChargesStatus && (
+            <div className={styles.statusRow}>
+              <span className={styles.dot} style={{ background: dotColor }} />
+              <span className={styles.statusLabel}>{STATUS_LABEL[summary.fixedChargesStatus]}</span>
+            </div>
+          )}
         </div>
         <button
           className={styles.eyeButton}

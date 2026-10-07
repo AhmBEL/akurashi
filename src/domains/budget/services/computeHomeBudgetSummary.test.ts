@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { computeFixedChargesStatus } from "./computeFixedChargesStatus";
-import { computeHomeBudgetSummary, type SummaryInput } from "./computeHomeBudgetSummary";
+import { computeHomeBudgetSummary, type SummaryInput, type SummaryLine } from "./computeHomeBudgetSummary";
 
 // Octobre 2026 : la semaine courante va du lundi 12 au lundi 19 (exclu).
 const base: SummaryInput = {
@@ -11,18 +11,22 @@ const base: SummaryInput = {
   ],
   lines: [],
   cycles: [],
-  monthStart: "2026-10-01",
-  nextMonthStart: "2026-11-01",
+  resetDay: 1,
+  today: "2026-10-14",
+  periodStart: "2026-10-01",
+  nextPeriodStart: "2026-11-01",
   weekStart: "2026-10-12",
   nextWeekStart: "2026-10-19",
 };
 
-const line = (id: string, category_id: string, amount: number, spent_on: string, financial_type = "variable_prevue") => ({
+const line = (id: string, category_id: string, amount: number, spent_on: string, financial_type = "variable_prevue"): SummaryLine => ({
   id,
   category_id,
   financial_type,
   amount,
+  periodicity: financial_type.startsWith("fixe") ? "mensuel" : null,
   spent_on,
+  validation_status: "validee",
 });
 
 describe("computeFixedChargesStatus", () => {
@@ -92,5 +96,35 @@ describe("computeHomeBudgetSummary", () => {
       cycles: [{ budget_line_id: "rent", period_month: "2026-10-01", status: "paye" }],
     });
     expect(paidThisMonth.fixedChargesStatus).toBe("orange");
+  });
+
+  it("seules les dépenses validées ou ajustées comptent dans les jauges", () => {
+    const proposed: SummaryLine = { ...line("p", "courses", 2000, "2026-10-04"), validation_status: "proposee" };
+    const refused: SummaryLine = { ...line("r", "courses", 3000, "2026-10-05"), validation_status: "refusee" };
+    const adjusted: SummaryLine = { ...line("a", "courses", 1500, "2026-10-06"), validation_status: "ajustee" };
+    const summary = computeHomeBudgetSummary({ ...base, lines: [line("v", "courses", 500, "2026-10-03"), proposed, refused, adjusted] });
+    expect(summary.gauges[0].spentAmount).toBe(2000);
+  });
+
+  it("la jauge mensuelle suit le jour de reset, pas le 1er du mois", () => {
+    const summary = computeHomeBudgetSummary({
+      ...base,
+      resetDay: 5,
+      today: "2026-10-14",
+      periodStart: "2026-10-05",
+      nextPeriodStart: "2026-11-05",
+      lines: [line("old", "courses", 4000, "2026-10-04"), line("new", "courses", 1000, "2026-10-05")],
+    });
+    expect(summary.gauges[0].spentAmount).toBe(1000);
+  });
+
+  it("accueil : rien à signaler sans charge due, orange quand tout est réglé (jamais vert)", () => {
+    expect(computeHomeBudgetSummary(base).fixedChargesStatus).toBeNull();
+    const allPaid = computeHomeBudgetSummary({
+      ...base,
+      lines: [line("rent", "logement", 90000, "2026-10-01", "fixe_fixe")],
+      cycles: [{ budget_line_id: "rent", period_month: "2026-10-01", status: "paye" }],
+    });
+    expect(allPaid.fixedChargesStatus).toBe("orange");
   });
 });

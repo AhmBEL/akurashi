@@ -1,5 +1,6 @@
 "use client";
 
+import { now } from "@/shared/lib/clock";
 import { useState } from "react";
 import Link from "next/link";
 import { Hand } from "lucide-react";
@@ -22,7 +23,7 @@ export function ChildHome() {
   const tasks = useTasksOfMember(family.id, member.id, member.id) ?? [];
   const [helpSent, setHelpSent] = useState(false);
 
-  const today = new Date();
+  const today = now();
   const todayKey = toDateString(today);
   const todays = tasks.filter(
     (task) => isDueToday(task, today) && (!task.done || (task.completedAt !== null && toDateString(new Date(task.completedAt)) === todayKey))

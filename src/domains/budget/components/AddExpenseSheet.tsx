@@ -2,7 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { getStore } from "@/shared/data/getStore";
-import { addExpense } from "../repository";
+import { now } from "@/shared/lib/clock";
+import { useAppData } from "@/shared/session/AppDataContext";
+import { hasOtherParent } from "@/domains/family/settings";
+import { Chip } from "@/domains/onboarding/components/steps/ui";
+import { addExpense, type ExpenseType } from "../repository";
 import { addExpenseFormSchema } from "../validation";
 import { toMinorUnits } from "@/shared/lib/money";
 import { toDateString } from "@/shared/lib/date";
@@ -26,13 +30,20 @@ interface AddExpenseSheetProps {
   members: MemberOption[];
 }
 
-const today = () => toDateString(new Date());
+const today = () => toDateString(now());
+const NEW_CATEGORY = "__new__";
 
+// Ajout rapide d'une dépense : raccourcis en un tap, type prévue / imprévue,
+// catégorie libre, et « à faire valider » par l'autre parent.
 export function AddExpenseSheet({ open, onClose, familyId, categories, members }: AddExpenseSheetProps) {
+  const { member, family, members: familyMembers } = useAppData();
   const [amount, setAmount] = useState("");
   const [chosenCategoryId, setCategoryId] = useState("");
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [chosenResponsibleId, setResponsibleId] = useState("");
-  const categoryId = chosenCategoryId || categories[0]?.id || "";
+  const [type, setType] = useState<ExpenseType>("variable_prevue");
+  const [needsValidation, setNeedsValidation] = useState(false);
+  const categoryId = chosenCategoryId || categories[0]?.id || NEW_CATEGORY;
   const responsibleId = chosenResponsibleId || members[0]?.id || "";
   const [spentOn, setSpentOn] = useState(today());
   const [note, setNote] = useState("");
@@ -41,24 +52,37 @@ export function AddExpenseSheet({ open, onClose, familyId, categories, members }
 
   if (!open) return null;
 
+  const canRequestValidation =
+    member.role === "parent" &&
+    hasOtherParent(family.settings) &&
+    familyMembers.some((candidate) => candidate.role === "parent" && candidate.id !== member.id);
+  const creatingCategory = categoryId === NEW_CATEGORY;
+
   const reset = () => {
     setAmount("");
     setNote("");
     setSpentOn(today());
+    setNewCategoryName("");
+    setNeedsValidation(false);
     setError(null);
   };
 
   const handleSubmit = () => {
     const parsed = addExpenseFormSchema.safeParse({
       amount,
-      categoryId,
+      categoryId: creatingCategory ? "" : categoryId,
+      newCategoryName: creatingCategory ? newCategoryName.trim() || null : null,
       responsibleId: responsibleId || null,
       spentOn,
-      note: note || null,
+      note: note.trim() || null,
     });
 
     if (!parsed.success) {
       setError(parsed.error.issues[0]?.message ?? "Formulaire invalide");
+      return;
+    }
+    if (!parsed.data.categoryId && !parsed.data.newCategoryName) {
+      setError("Choisis ou crée une catégorie");
       return;
     }
 
@@ -67,11 +91,15 @@ export function AddExpenseSheet({ open, onClose, familyId, categories, members }
       try {
         await addExpense(getStore(), {
           familyId,
-          categoryId: parsed.data.categoryId,
+          actorId: member.id,
+          categoryId: parsed.data.categoryId || null,
+          newCategoryName: parsed.data.newCategoryName,
           amountMinorUnits: toMinorUnits(parsed.data.amount),
+          financialType: type,
           responsibleId: parsed.data.responsibleId,
           spentOn: parsed.data.spentOn,
           note: parsed.data.note,
+          requestValidation: canRequestValidation && needsValidation,
         });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Impossible d'enregistrer la dépense");
@@ -81,6 +109,8 @@ export function AddExpenseSheet({ open, onClose, familyId, categories, members }
       onClose();
     });
   };
+
+  const shortcuts = family.settings.expenseShortcuts;
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
@@ -92,6 +122,19 @@ export function AddExpenseSheet({ open, onClose, familyId, categories, members }
           <div className={styles.headTitle}>Nouvelle dépense</div>
           <span style={{ width: 44 }} />
         </div>
+
+        {shortcuts.length > 0 && (
+          <div className={styles.field}>
+            <label>Raccourcis</label>
+            <div className={styles.chips}>
+              {shortcuts.map((shortcut) => (
+                <Chip key={shortcut} active={note === shortcut} onClick={() => setNote(note === shortcut ? "" : shortcut)}>
+                  {shortcut}
+                </Chip>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className={styles.field}>
           <label htmlFor="expense-amount">Montant</label>
@@ -109,6 +152,14 @@ export function AddExpenseSheet({ open, onClose, familyId, categories, members }
         </div>
 
         <div className={styles.field}>
+          <label>Type</label>
+          <div className={styles.chips}>
+            <Chip active={type === "variable_prevue"} onClick={() => setType("variable_prevue")}>Prévue</Chip>
+            <Chip active={type === "variable_imprevue"} onClick={() => setType("variable_imprevue")}>Imprévue</Chip>
+          </div>
+        </div>
+
+        <div className={styles.field}>
           <label htmlFor="expense-category">Catégorie</label>
           <select
             id="expense-category"
@@ -121,7 +172,18 @@ export function AddExpenseSheet({ open, onClose, familyId, categories, members }
                 {c.name}
               </option>
             ))}
+            <option value={NEW_CATEGORY}>Autre catégorie…</option>
           </select>
+          {creatingCategory && (
+            <input
+              aria-label="Nom de la nouvelle catégorie"
+              className={styles.input}
+              style={{ marginTop: 8 }}
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="Nom de la catégorie"
+            />
+          )}
         </div>
 
         <div className={styles.row}>
@@ -163,6 +225,17 @@ export function AddExpenseSheet({ open, onClose, familyId, categories, members }
             placeholder="optionnel"
           />
         </div>
+
+        {canRequestValidation && (
+          <div className={styles.field}>
+            <div className={styles.chips}>
+              <Chip active={needsValidation} onClick={() => setNeedsValidation(!needsValidation)}>
+                À faire valider par l&rsquo;autre parent
+              </Chip>
+            </div>
+            {needsValidation && <div className={styles.hint}>Elle ne comptera dans les jauges qu&rsquo;une fois validée.</div>}
+          </div>
+        )}
 
         {error ? <div className={styles.error}>{error}</div> : null}
 

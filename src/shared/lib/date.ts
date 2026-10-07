@@ -15,3 +15,9 @@ export function startOfWeek(date: Date): Date {
   const daysSinceMonday = (date.getDay() + 6) % 7;
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() - daysSinceMonday);
 }
+
+// Inverse de `toDateString` : « YYYY-MM-DD » → minuit local de ce jour.
+export function parseDateString(value: string): Date {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}

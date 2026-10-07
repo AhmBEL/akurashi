@@ -1,3 +1,4 @@
+import { now } from "@/shared/lib/clock";
 import type { Database } from "@/shared/lib/supabase/database.types";
 import type { BaseRow, DataStore, NewRow } from "@/shared/data/types";
 import { notify } from "@/domains/notifications/repository";
@@ -50,7 +51,7 @@ export interface CreateTaskInput {
   categoryId: string | null;
 }
 
-export async function createTask(store: DataStore, input: CreateTaskInput): Promise<void> {
+export async function createTask(store: DataStore, input: CreateTaskInput): Promise<string> {
   // Une tâche privée n'est visible que de son créateur : elle ne peut être qu'à lui.
   const participantIds = input.isPrivate ? [input.creatorId] : input.participantIds;
   const discuss = input.isPrivate ? false : input.discuss;
@@ -91,6 +92,7 @@ export async function createTask(store: DataStore, input: CreateTaskInput): Prom
   }
 
   await notifyAboutTask(store, input, plan.participants.map((p) => p.memberId), discuss);
+  return task.id;
 }
 
 // Le créateur n'est jamais notifié de sa propre action.
@@ -139,7 +141,7 @@ export async function getTasksOfMember(
   familyId: string,
   memberId: string,
   viewerId: string,
-  today: Date = new Date()
+  today: Date = now()
 ): Promise<TaskView[]> {
   const [tasks, members, participants, links, categories] = await Promise.all([
     store.list<TaskRow>("tasks", { family_id: familyId }),
@@ -196,5 +198,5 @@ export async function getTasksOfMember(
 }
 
 export async function setTaskCompletion(store: DataStore, taskId: string, completed: boolean): Promise<void> {
-  await store.update<TaskRow>("tasks", taskId, { completed_at: completed ? new Date().toISOString() : null });
+  await store.update<TaskRow>("tasks", taskId, { completed_at: completed ? now().toISOString() : null });
 }

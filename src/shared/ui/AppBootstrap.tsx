@@ -2,7 +2,9 @@
 
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
+import { getStore } from "@/shared/data/getStore";
 import { useFamilyState } from "@/domains/family/hooks";
+import { settleDirectDebits } from "@/domains/budget/repository";
 import { getThemeVars } from "@/shared/design-tokens/theme";
 import { AppDataProvider } from "@/shared/session/AppDataContext";
 import { AppShell } from "./AppShell";
@@ -18,6 +20,13 @@ export function AppBootstrap({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (state === null) router.replace("/onboarding");
   }, [state, router]);
+
+  // Les prélèvements dont le jour est arrivé se valident seuls à l'ouverture de l'app.
+  const familyId = state?.family.id;
+  const budgetEnabled = state?.family.settings.budgetEnabled;
+  useEffect(() => {
+    if (familyId && budgetEnabled) void settleDirectDebits(getStore(), familyId);
+  }, [familyId, budgetEnabled]);
 
   if (!state) return null;
 

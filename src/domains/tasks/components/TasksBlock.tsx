@@ -1,5 +1,6 @@
 "use client";
 
+import { now } from "@/shared/lib/clock";
 import Link from "next/link";
 import { getStore } from "@/shared/data/getStore";
 import { toDateString } from "@/shared/lib/date";
@@ -21,7 +22,7 @@ interface TasksBlockProps {
 // cochées aujourd'hui (elles restent barrées jusqu'à demain).
 export function TasksBlock({ familyId, memberId }: TasksBlockProps) {
   const tasks = useTasksOfMember(familyId, memberId, memberId);
-  const today = new Date();
+  const today = now();
   const todayKey = toDateString(today);
 
   const visible = (tasks ?? [])

@@ -1,5 +1,6 @@
 "use client";
 
+import { now } from "@/shared/lib/clock";
 import { getStore } from "@/shared/data/getStore";
 import { Card } from "@/shared/ui/Card";
 import { PillButton } from "@/shared/ui/PillButton";
@@ -18,7 +19,7 @@ export function ChildCard({ child }: { child: FamilyMember }) {
   const progress = useChildProgress(child.id);
   const tasks = useTasksOfMember(family.id, child.id, member.id) ?? [];
 
-  const today = new Date();
+  const today = now();
   const todays = tasks.filter((task) => isDueToday(task, today));
   const doneCount = todays.filter((task) => task.done).length;
   const lastAction = progress?.lastAction;
